@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block title %}Registrar Resultado{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<style>
+    body {
+        font-family: 'Rubik', sans-serif;
+        background-color: #f2f4f7;
+    }
+
+    .card {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 30px;
+        border-radius: 16px;
+        background-color: white;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-title {
+        font-weight: 700;
+        color: #198754;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 500;
+    }
+
+    .form-control {
+        border-radius: 12px;
+        padding: 12px;
+    }
+
+    .btn {
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 10px 20px;
+    }
+
+    .btn-success {
+        background-color: #198754;
+        border: none;
+    }
+
+    .btn-success:hover {
+        background-color: #157347;
+    }
+
+    .btn-secondary {
+        margin-top: 10px;
+    }
+
+    .info-text {
+        text-align: center;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        color: #555;
+    }
+
+    .equipo {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .equipo span {
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+
+    .equipo-1 {
+        color: #ffc107; /* amarillo Bootstrap */
+    }
+
+    .equipo-2 {
+        color: #198754;
+    }
+
+    .resultado-separado {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+
+    .resultado-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .resultado-input {
+        font-size: 1.5rem;
+        width: 70px;
+        text-align: center;
+        border-radius: 8px;
+        border: 2px solid #ccc;
+        padding: 6px;
+        transition: border-color 0.3s;
+    }
+
+    .resultado-input:focus {
+        outline: none;
+        border-color: #0d6efd;
+    }
+
+    @media (max-width: 576px) {
+        .resultado-separado {
+            flex-direction: column;
+            gap: 20px;
+        }
+    }
+</style>
+
+<div class="card">
+    <h2 class="card-title"><i class="fas fa-futbol me-2"></i>Registrar Resultado</h2>
+
+    <div class="equipo">
+        <span class="equipo-1"><i class="fas fa-shield-alt me-1"></i>{{ partido.equipo1 }}</span>
+        <span class="text-muted">vs</span>
+        <span class="equipo-2"><i class="fas fa-shield-heart me-1"></i>{{ partido.equipo2 }}</span>
+    </div>
+
+    <p class="info-text"><i class="fa-regular fa-calendar-days me-1"></i>{{ partido.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</p>
+
+    <form method="POST">
+        <div class="resultado-separado">
+            <div class="resultado-box">
+                <label for="goles_equipo1" class="form-label equipo-1">{{ partido.equipo1 }}</label>
+                <input type="number" name="goles_equipo1" id="goles_equipo1" min="0" class="resultado-input" required>
+            </div>
+
+            <div class="resultado-box">
+                <label for="goles_equipo2" class="form-label equipo-2">{{ partido.equipo2 }}</label>
+                <input type="number" name="goles_equipo2" id="goles_equipo2" min="0" class="resultado-input" required>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <div class="form-text mb-3">Ingresa los goles por equipo</div>
+            <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i>Guardar</button>
+            <a href="{{ url_for('detalle_partido', partido_id=partido.id) }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left"></i> Volver</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

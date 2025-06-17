@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% block title %}Perfil de {{ usuario.username }}{% endblock %}
+{% block content %}
+
+{% set descripciones = {
+    0.5: "Muy malo",
+    1.0: "Muy malo+",
+    1.5: "Malo",
+    2.0: "Malo+",
+    2.5: "Regular",
+    3.0: "Regular+",
+    3.5: "Aceptable",
+    4.0: "Aceptable+",
+    4.5: "Promedio",
+    5.0: "Promedio+",
+    5.5: "Bien",
+    6.0: "Bien+",
+    6.5: "Muy bien",
+    7.0: "Muy bien+",
+    7.5: "Excelente",
+    8.0: "Excelente+",
+    8.5: "Estrella",
+    9.0: "Estrella+",
+    9.5: "Top",
+    10.0: "¡Jugador excepcional!"
+} %}
+{% set promedio = usuario.promedio_calificaciones() | float %}
+{% set promedio_aprox = ((promedio * 2) | round(0, 'common')) / 2 %}
+{% set promedio_redondeado = promedio_aprox %}
+{% set descripcion = descripciones.get(promedio_aprox, 'Sin descripción') %}
+{% set badge_class = (
+    'danger' if promedio_redondeado <= 2 else
+    'warning' if promedio_redondeado <= 4 else
+    'secondary' if promedio_redondeado <= 5.5 else
+    'info' if promedio_redondeado <= 7 else
+    'primary' if promedio_redondeado <= 8.5 else
+    'success'
+) %}
+{% set total_calificaciones = calificaciones | length %}
+
+<div class="container py-4">
+    <!-- Perfil -->
+    <div class="card text-center mb-4 shadow-sm">
+        <div class="card-body">
+            <div class="position-relative d-inline-block">
+                <img id="foto-perfil" src="{{ url_for('static', filename='profile_pics/' ~ usuario.foto_perfil) }}"
+                     class="rounded-circle border border-3" width="120" height="120" alt="Foto de perfil">
+                {% if current_user.id == usuario.id %}
+                    <label for="foto_input" class="position-absolute bottom-0 end-0 bg-white rounded-circle p-2 shadow"
+                           style="cursor: pointer;" title="Cambiar foto">
+                        <i class="bi bi-camera-fill"></i>
+                    </label>
+                    <form id="form-foto" action="{{ url_for('subir_foto') }}" method="POST" enctype="multipart/form-data">
+                        <input type="file" name="foto_perfil" id="foto_input" accept="image/*" class="d-none">
+                    </form>
+                {% endif %}
+            </div>
+            <h2 class="mt-3">{{ usuario.username }}</h2>
+
+            <!-- Promedio -->
+            <p class="mb-1">
+                <p class="text-muted mb-1">
+  Promedio general:
+  <span class="badge bg-{{ badge_class }} px-3 py-2 rounded-pill">
+    {{ '{:.1f}'.format(promedio_redondeado).rstrip('0').rstrip('.') }} / 10
+  </span>
+</p>
+</p>
+            </p>
+            <span class="badge bg-{{ badge_class }} fs-6 px-3 py-2 mb-1">{{ descripcion }}</span>
+
+            <!-- Estrellas visuales -->
+            <div class="text-warning fs-5 mb-2">
+                {% for i in range(1, 11) %}
+                    {% if promedio_redondeado >= i %}
+                        <i class="fa-solid fa-star"></i>
+                    {% elif promedio_redondeado + 0.5 >= i %}
+                        <i class="fa-solid fa-star-half-stroke"></i>
+                    {% else %}
+                        <i class="fa-regular fa-star"></i>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Total de calificaciones -->
+            <p class="text-muted mb-2">
+                <i class="fa-solid fa-users"></i> {{ total_calificaciones }} calificación{{ total_calificaciones != 1 and 'es' or '' }} recibid{{ total_calificaciones != 1 and 'as' or 'a' }}
+            </p>
+
+            <!-- Barra de progreso -->
+            <div class="progress mx-auto mb-3" style="max-width: 300px; height: 12px;">
+                <div class="progress-bar bg-{{ badge_class }}" role="progressbar"
+                     style="width: {{ promedio_redondeado * 10 }}%;" aria-valuenow="{{ promedio_redondeado * 10 }}"
+                     aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+
+            <div id="mensaje" class="alert alert-success d-none mt-3">Foto actualizada</div>
+        </div>
+    </div>
+
+    <!-- Solicitudes -->
+    {% if current_user.id == usuario.id %}
+    <div class="mb-4">
+        <h4>Solicitudes de amistad</h4>
+        {% if solicitudes %}
+            <ul class="list-group">
+                {% for solicitud in solicitudes if not solicitud.confirmada %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="{{ url_for('static', filename='profile_pics/' ~ solicitud.usuario.foto_perfil) }}"
+                             class="rounded-circle" width="40" height="40">
+                        {{ solicitud.usuario.username }}
+                    </div>
+                    <div>
+                        <form action="{{ url_for('aceptar_amistad', solicitud_id=solicitud.id) }}" method="post" class="d-inline">
+                            <button class="btn btn-success btn-sm">Aceptar</button>
+                        </form>
+                        <form action="{{ url_for('rechazar_amistad', solicitud_id=solicitud.id) }}" method="post" class="d-inline">
+                            <button class="btn btn-outline-danger btn-sm">Rechazar</button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No tienes solicitudes pendientes.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Amigos -->
+    <div class="mb-4">
+        <h4>Amigos</h4>
+        {% set amigos_confirmados = [] %}
+        {% for amistad in usuario.amistades_enviadas if amistad.confirmada %}
+            {% set _ = amigos_confirmados.append(amistad.amigo) %}
+        {% endfor %}
+        {% for amistad in usuario.amistades_recibidas if amistad.confirmada %}
+            {% set _ = amigos_confirmados.append(amistad.usuario) %}
+        {% endfor %}
+        {% if amigos_confirmados %}
+            <ul class="list-group">
+                {% for amigo in amigos_confirmados %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="{{ url_for('static', filename='profile_pics/' ~ amigo.foto_perfil) }}"
+                             class="rounded-circle" width="40" height="40">
+                        {{ amigo.username }}
+                    </div>
+                    {% if current_user.id == usuario.id %}
+                    <form action="{{ url_for('eliminar_amigo', user_id=amigo.id) }}" method="post">
+                        <button class="btn btn-outline-danger btn-sm">Eliminar</button>
+                    </form>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No tienes amigos aún.</p>
+        {% endif %}
+    </div>
+
+    <!-- Invitaciones -->
+    {% if current_user.id == usuario.id %}
+    <div class="mb-4">
+        <h4>Invitaciones a partidos</h4>
+        {% if invitaciones %}
+            <ul class="list-group">
+                {% for invitacion in invitaciones %}
+                <li class="list-group-item">
+                    <strong>{{ invitacion.partido.equipo1 }} vs {{ invitacion.partido.equipo2 }}</strong><br>
+                    Fecha: {{ invitacion.partido.fecha_hora.strftime('%d/%m/%Y') }}<br>
+                    Lugar: {{ invitacion.partido.lugar }}<br>
+                    {% if not invitacion.partido.cerrado %}
+                        <a href="{{ url_for('detalle_partido', partido_id=invitacion.partido.id) }}" class="btn btn-link btn-sm">Ver detalles</a>
+                        <form method="post" action="{{ url_for('aceptar_invitacion', invitacion_id=invitacion.id) }}" class="d-inline">
+                            <button class="btn btn-sm btn-success">Aceptar</button>
+                        </form>
+                        <form method="post" action="{{ url_for('rechazar_invitacion', invitacion_id=invitacion.id) }}" class="d-inline">
+                            <button class="btn btn-sm btn-outline-danger">Rechazar</button>
+                        </form>
+                    {% else %}
+                        <p class="text-muted mb-0">Este partido ya fue cerrado. Invitación inválida.</p>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No tienes invitaciones pendientes.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Calificaciones -->
+    <div class="mb-4">
+        <h4>Calificaciones recibidas</h4>
+        {% if calificaciones %}
+            <ul class="list-group">
+                {% for calificacion in calificaciones %}
+                <li class="list-group-item">
+                    <strong>De:</strong> {{ calificacion.evaluador.username }}<br>
+                    <strong>Partido:</strong>
+                    <a href="{{ url_for('detalle_partido', partido_id=calificacion.partido.id) }}">
+                        {{ calificacion.partido.equipo1 }} vs {{ calificacion.partido.equipo2 }}
+                    </a><br>
+                    <strong>Resultado:</strong>
+                    {% if calificacion.partido.resultado %}
+                        {{ calificacion.partido.resultado }}
+                    {% elif calificacion.partido.cerrado %}
+                        Partido cerrado sin resultado
+                    {% else %}
+                        Aún no registrado
+                    {% endif %}<br>
+                    <strong>Puntuación:</strong> {{ calificacion.puntuacion }}/10<br>
+                    <strong>Comentario:</strong> {{ calificacion.comentario or "Sin comentario" }}<br>
+                    <small class="text-muted">{{ calificacion.fecha.strftime('%d/%m/%Y %H:%M') }}</small>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No has recibido calificaciones aún.</p>
+        {% endif %}
+    </div>
+
+    <!-- Partidos participados -->
+    <div class="mb-4">
+        <h4>Partidos en los que ha participado</h4>
+        {% if inscripciones %}
+            <ul class="list-group">
+                {% for inscripcion in inscripciones %}
+                <li class="list-group-item">
+                    <strong>{{ inscripcion.partido.equipo1 }} vs {{ inscripcion.partido.equipo2 }}</strong><br>
+                    Fecha: {{ inscripcion.partido.fecha_hora.strftime('%d/%m/%Y') }}<br>
+                    Lugar: {{ inscripcion.partido.lugar }}<br>
+                    Resultado:
+                    {% if inscripcion.partido.resultado %}
+                        {{ inscripcion.partido.resultado }}
+                    {% elif inscripcion.partido.cerrado %}
+                        Partido cerrado sin resultado
+                    {% else %}
+                        Aún no registrado
+                    {% endif %}<br>
+                    Equipo: {{ inscripcion.equipo }}<br>
+                    <a href="{{ url_for('detalle_partido', partido_id=inscripcion.partido.id) }}" class="btn btn-link btn-sm">Ver detalles</a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No has participado en ningún partido aún.</p>
+        {% endif %}
+    </div>
+
+    <div class="text-center">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">Volver al inicio</a>
+    </div>
+</div>
+
+<!-- JS para la foto -->
+<script>
+    const input = document.getElementById('foto_input');
+    const img = document.getElementById('foto-perfil');
+    const form = document.getElementById('form-foto');
+    const mensaje = document.getElementById('mensaje');
+
+    input.addEventListener('change', () => {
+        const formData = new FormData(form);
+        fetch('{{ url_for("subir_foto") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.filename) {
+                img.src = `/static/profile_pics/${data.filename}?v=${data.timestamp}`;
+                mensaje.classList.remove('d-none');
+                setTimeout(() => mensaje.classList.add('d-none'), 2000);
+            }
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% block title %}Editar Partido{% endblock %}
+
+{% block content %}
+<!-- Tipografía Rubik + Font Awesome para íconos -->
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-V5yE1d9j+W08h5N..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<style>
+    body {
+        font-family: 'Rubik', sans-serif;
+        background-color: #f0f2f5;
+    }
+
+    .edit-card {
+        max-width: 700px;
+        margin: 60px auto;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        padding: 40px;
+    }
+
+    .edit-card h2 {
+        color: #198754;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-control {
+        border-radius: 12px;
+        padding: 12px 16px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 0.15rem rgba(25, 135, 84, 0.25);
+    }
+
+    .input-icon {
+        display: flex;
+        align-items: center;
+    }
+
+    .input-icon i {
+        margin-right: 10px;
+        color: #198754;
+        min-width: 24px;
+        font-size: 18px;
+    }
+
+    .btn-success {
+        background-color: #198754;
+        font-weight: 600;
+        padding: 12px;
+        border-radius: 12px;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-success:hover {
+        background-color: #145c37;
+    }
+
+    .btn-cancel {
+        display: block;
+        margin-top: 20px;
+        text-align: center;
+        color: #198754;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .btn-cancel:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+        .edit-card {
+            padding: 25px;
+        }
+    }
+</style>
+
+<div class="edit-card">
+    <h2><i class="fas fa-futbol"></i> Editar Partido</h2>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="fecha" class="form-label">Fecha</label>
+            <div class="input-icon">
+                <i class="fa-regular fa-calendar-days"></i>
+                <input type="date" id="fecha" name="fecha" class="form-control" value="{{ partido.fecha_hora.strftime('%Y-%m-%d') }}" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="hora" class="form-label">Hora</label>
+            <div class="input-icon">
+                <i class="fa-regular fa-clock"></i>
+                <input type="time" id="hora" name="hora" class="form-control" value="{{ partido.fecha_hora.strftime('%H:%M') }}" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="lugar" class="form-label">Lugar</label>
+            <div class="input-icon">
+                <i class="fa-solid fa-location-dot"></i>
+                <input type="text" id="lugar" name="lugar" class="form-control" value="{{ partido.lugar }}" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="equipo1" class="form-label">Equipo 1</label>
+            <div class="input-icon">
+                <i class="fa-solid fa-people-group"></i>
+                <input type="text" id="equipo1" name="equipo1" class="form-control" value="{{ partido.equipo1 }}" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="equipo2" class="form-label">Equipo 2</label>
+            <div class="input-icon">
+                <i class="fa-solid fa-people-group"></i>
+                <input type="text" id="equipo2" name="equipo2" class="form-control" value="{{ partido.equipo2 }}" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="max_jugadores" class="form-label">Máximo jugadores por equipo</label>
+            <div class="input-icon">
+                <i class="fa-solid fa-user-plus"></i>
+                <input type="number" id="max_jugadores" name="max_jugadores" class="form-control" min="1" value="{{ partido.max_jugadores }}" required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100"><i class="fas fa-save"></i> Guardar Cambios</button>
+    </form>
+
+    <a href="{{ url_for('detalle_partido', partido_id=partido.id) }}" class="btn-cancel">
+        <i class="fas fa-arrow-left"></i> Cancelar
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+futbol_app/
+│
+├── app.py                    # Archivo principal de la app Flask
+├── models.py                 # Definición de modelos (ORM, probablemente SQLAlchemy)
+├── templates/                # Plantillas HTML para renderizar vistas
+│   ├── index.html            # Página de inicio
+│   ├── crear_partido.html    # Formulario para crear un partido
+│   ├── detalle_partido.html  # Detalles de un partido específico
+│   ├── editar_partido.html   # Edición de un partido
+│   ├── login.html            # Página de inicio de sesión
+│   ├── register.html         # Página de registro de usuario
+│   ├── calificar_jugador.html # Calificación de jugadores después de un partido
+│   ├── perfil_usuario.html   # Perfil del usuario
+│   ├── unise_partido.html    # Unirse a un partido existente
+│   └── restablecer.html      # Restablecer contraseña
+│
+├── static/
+│   └── style.css             # Estilos CSS
+
+
+recordatorio
+ 
+
+-poder añadir foto de perfil al usuario y en el inicio. -- listo
+-organizador del partido registra el resultado del partido para poder cerrar el evento( el tiempo maximo para poner el resultado es de 12 horas  si no se cerrara solo y no se registrara en el historial el evento se eliminara.) -- listo
+-calificacion de jugadores solo despues de cerrado o terminado el partido.--listo
+-los usuarios participantes podran ver el perfil de los jugadores participantes.---listo
+-los usuarios podran buscar perfiles de jugadores en la plataforma e invitar o añadir como amigos. -- Listo
+-Eventos solo por medio de invitaciones -- Lito
+-los eventos solo se pueden crear  con hora, de 6 horas despues de la hora actual .. pendiente
+-que las invitaciones se puedan realizar a cualquier usuario sin necesidad de ser amigo- LISTO
+- al crear un partido dejar la opcion de que el creador Tambien pueda unirse- Listo
+-que se pueda enviar link de invitaccion al evento SI EL EVENTO NO ES SOLO PARA INVITADOS.--listo
+- que el enlace ya no funcione si el partido ha empezado tener en cuenta la hora de inicio del evento.-- Pendiente
+-icono de notificacion pendiente por revisar -- parecido a facebook cuando tengo una notificacion pero esta vez cuando el usuario reciba una solicitud de un partido o invitacion de amigos  ---Listo
+-login por correo electronico con confirmacion -- Pendiente
+-cuando la persona acepta la invitacion al partido , tenga la opcion de escoger a que equipo se quiere unir-- Listo
+-recordatorio de partidos o eventos un dia antes y el dia del partido  8 horas antes por correo--Pendiente
+-invitaciones de amigo y partidos se notifiquen por correo y que  tenga un enlace que refirija a la pagina para ingresar a web . Pendiente
+-modo de juego vs -- donde se crea el evento por el creador, el creador debe invitar a dos capitanes uno para cada equipo (el creador puede ser capitan o invitar a dos personas diferentes para ser capitanes ), cada capitan va a un equipo diferente, capitan equipo 1 puede invitar amigos para su equipo y capitan 2 puede invitar amigos para su equipo (los capitanes no podran invitar un jugador que ya se encuentre en alguno de los equiops).
+-en el base.html quitar el boton de mi perfil y que ese boton sea el icono de foto con el nombre . Listo
+- en las tarjetas de partidos en index cuando un partido este cerrado debe mostrar el mensaje de partido cerrado no que ya estas inscrito si lo estas.- Listo
+-- boton de volver a la pestaña anterior debe quedar en el Base.html -- Listo
+-- boton de ubicacion de canchas .. 

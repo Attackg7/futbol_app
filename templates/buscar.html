@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Buscar Jugadores{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4 text-primary">Buscar Jugadores</h1>
+
+    <div class="input-group mb-4">
+        <input type="text" id="input-busqueda" class="form-control" placeholder="Buscar por nombre de usuario">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+    </div>
+
+    <div id="loading" class="text-center my-3" style="display:none;">
+        <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <ul id="lista-usuarios" class="list-group"></ul>
+
+    <div class="mt-4">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Volver al inicio</a>
+    </div>
+</div>
+
+<!-- Pasa el ID del usuario actual desde Flask a JavaScript -->
+<script>
+    const currentUserId = {{ current_user.id }};
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("input-busqueda");
+    const lista = document.getElementById("lista-usuarios");
+    const loading = document.getElementById("loading");
+
+    let timeout = null;
+
+    input.addEventListener("input", function () {
+        clearTimeout(timeout);
+        const query = this.value.trim();
+        lista.innerHTML = "";
+        if (query.length < 2) return;
+
+        loading.style.display = "block";
+
+        timeout = setTimeout(() => {
+            fetch(`/buscar_usuarios_ajax?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = "none";
+                    lista.innerHTML = "";
+
+                    if (data.length === 0) {
+                        lista.innerHTML = `<li class="list-group-item text-muted">No se encontraron usuarios.</li>`;
+                        return;
+                    }
+
+                    data.forEach(user => {
+                        const li = document.createElement("li");
+                        li.className = "list-group-item d-flex justify-content-between align-items-center";
+
+                        let estadoHTML = '';
+                        if (user.id !== currentUserId) {
+                            if (user.ya_enviada) {
+                                estadoHTML = `<span class="text-success">Solicitud enviada</span>`;
+                            } else {
+                                estadoHTML = `<button class="btn btn-outline-success btn-sm" onclick="enviarSolicitud(${user.id})" data-bs-toggle="tooltip" title="Enviar solicitud de amistad">Enviar solicitud</button>`;
+                            }
+                        }
+
+                        li.innerHTML = `
+                            <div class="d-flex align-items-center">
+                                <img src="/static/profile_pics/${user.foto_perfil}" width="40" height="40" class="rounded-circle me-3">
+                                <strong>${user.username}</strong>
+                            </div>
+                            <div id="estado-${user.id}">${estadoHTML}</div>
+                        `;
+                        lista.appendChild(li);
+                    });
+
+                    // Activar tooltips
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                    tooltipTriggerList.map(el => new bootstrap.Tooltip(el))
+                });
+        }, 500); // retraso para no enviar peticiones cada milisegundo
+    });
+});
+
+function enviarSolicitud(userId) {
+    fetch(`/agregar_amigo/${userId}`, {
+        method: 'POST'
+    }).then(res => {
+        if (res.ok) {
+            document.getElementById(`estado-${userId}`).innerHTML =
+                '<span class="text-success">Solicitud enviada</span>';
+        } else {
+            alert("No se pudo enviar la solicitud.");
+        }
+    });
+}
+</script>
+{% endblock %}

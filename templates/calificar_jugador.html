@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% block title %}Calificar Jugador{% endblock %}
+{% block content %}
+
+<style>
+.perfil-calificar-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.estrellas .star {
+    font-size: 2rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    display: inline-block;
+    position: relative;
+    color: #dee2e6;
+}
+
+.estrellas .fa-solid {
+    color: #facc15 !important; /* amarillo estilo Tailwind */
+}
+
+.estrellas .fa-star-half-stroke {
+    color: #facc15 !important;
+}
+
+.calificacion-texto {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #1e293b;
+}
+</style>
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <div class="text-center mb-4">
+                    <img src="{{ url_for('static', filename='profile_pics/' ~ jugador.foto_perfil) }}"
+                         alt="Foto de perfil de {{ jugador.username }}"
+                         class="perfil-calificar-img mb-2">
+                    <h4 class="fw-bold mb-1">Calificar a <span class="text-success">{{ jugador.username }}</span></h4>
+                    <p class="text-muted small mb-0">Tu calificación será visible en su perfil</p>
+                </div>
+
+                <form method="POST" id="formCalificacion">
+                    <input type="hidden" name="puntuacion" id="puntuacion" value="0">
+
+                    <!-- Estrellas -->
+                    <div class="estrellas text-center mb-2" id="estrellas">
+    {% for i in range(1, 11) %}
+        <i class="fa-regular fa-star star" data-value="{{ i }}" title="{{ i }}"></i>
+    {% endfor %}
+    <div class="calificacion-texto text-center mt-2" id="textoCalificacion">Selecciona una puntuación</div>
+</div>
+<input type="hidden" name="puntuacion" id="puntuacion" value="0">
+                <!-- Comentario -->
+                    <div class="mb-3">
+                        <label for="comentario" class="form-label fw-semibold">Comentario (opcional)</label>
+                        <textarea name="comentario" id="comentario" rows="4" class="form-control"
+                                  placeholder="Escribe un comentario sobre el desempeño del jugador..."></textarea>
+                    </div>
+
+                    <!-- Botón -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">
+                            📩 Enviar calificación
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Volver -->
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('detalle_partido', partido_id=partido.id) }}" class="text-decoration-none small text-secondary">
+                        ← Volver al detalle del partido
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const estrellas = document.querySelectorAll('.star');
+    const input = document.getElementById('puntuacion');
+    const texto = document.getElementById('textoCalificacion');
+
+    const descripciones = {
+        0.5: "Muy malo",
+        1: "Muy malo+",
+        1.5: "Malo",
+        2: "Malo+",
+        2.5: "Regular",
+        3: "Regular+",
+        3.5: "Aceptable",
+        4: "Aceptable+",
+        4.5: "Promedio",
+        5: "Promedio+",
+        5.5: "Bien",
+        6: "Bien+",
+        6.5: "Muy bien",
+        7: "Muy bien+",
+        7.5: "Excelente",
+        8: "Excelente+",
+        8.5: "Estrella",
+        9: "Estrella+",
+        9.5: "Top",
+        10: "¡Jugador excepcional!"
+    };
+
+    function actualizarVisual(valor) {
+        estrellas.forEach(star => {
+            const val = parseInt(star.dataset.value);
+            star.classList.remove('fa-solid', 'fa-star-half-stroke', 'fa-regular');
+            if (val <= Math.floor(valor)) {
+                star.classList.add('fa-solid', 'fa-star');
+            } else if (val === Math.ceil(valor) && valor % 1 !== 0) {
+                star.classList.add('fa-solid', 'fa-star-half-stroke');
+            } else {
+                star.classList.add('fa-regular', 'fa-star');
+            }
+        });
+
+        texto.textContent = valor > 0 ? `${valor} ⭐ - ${descripciones[valor] || 'Calificación'}` : 'Selecciona una puntuación';
+    }
+
+    estrellas.forEach(star => {
+        star.addEventListener('mousemove', function (e) {
+            const rect = star.getBoundingClientRect();
+            const isLeft = (e.clientX - rect.left) < rect.width / 2;
+            const value = parseInt(star.dataset.value);
+            const hoverValue = isLeft ? value - 0.5 : value;
+            actualizarVisual(hoverValue);
+        });
+
+        star.addEventListener('click', function (e) {
+            const rect = star.getBoundingClientRect();
+            const isLeft = (e.clientX - rect.left) < rect.width / 2;
+            const value = parseInt(star.dataset.value);
+            const finalValue = isLeft ? value - 0.5 : value;
+            input.value = finalValue;
+            actualizarVisual(finalValue);
+        });
+
+        star.addEventListener('mouseleave', function () {
+            actualizarVisual(parseFloat(input.value));
+        });
+    });
+
+    document.getElementById('formCalificacion').addEventListener('submit', function (e) {
+        if (parseFloat(input.value) === 0) {
+            e.preventDefault();
+            alert('Debes seleccionar una puntuación antes de enviar.');
+        }
+    });
+
+    // Render inicial
+    actualizarVisual(0);
+});
+</script>
+
+{% endblock %}

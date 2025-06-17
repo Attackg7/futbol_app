@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+{% block title %}Detalle del Partido{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-V5yE1..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<style>
+    body {
+        font-family: 'Rubik', sans-serif;
+        background-color: #f2f4f7;
+    }
+
+    .card {
+        border-radius: 16px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        margin-bottom: 24px;
+    }
+
+    .card-title {
+        color: #198754;
+        font-weight: 700;
+    }
+
+    .form-control {
+        border-radius: 12px;
+        padding: 10px 14px;
+    }
+
+    .btn {
+        border-radius: 12px;
+        font-weight: 500;
+    }
+
+    .btn-outline-success, .btn-outline-primary {
+        transition: 0.2s ease;
+    }
+
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #e1e1e1;
+    }
+
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+
+    .input-group input {
+        border-radius: 12px 0 0 12px;
+    }
+
+    .input-group .btn {
+        border-radius: 0 12px 12px 0;
+    }
+
+    .text-muted small {
+        font-size: 13px;
+    }
+</style>
+
+<div class="container py-4">
+
+    <!-- Info del Partido -->
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title text-center">
+    <span class="text-warning">
+        <i class="fas fa-shield-alt me-1"></i>{{ partido.equipo1 }}
+    </span>
+    <span class="mx-2 text-warning">vs</span>
+    <span class="text-success">
+        {{ partido.equipo2 }} <i class="fas fa-shield-heart ms-1"></i>
+    </span>
+</h2>
+            <p><i class="fa-regular fa-calendar-days me-1"></i><strong>Fecha:</strong> {{ partido.fecha_hora.strftime('%d/%m/%Y') }}</p>
+            <p><i class="fa-regular fa-clock me-1"></i><strong>Hora:</strong> {{ partido.fecha_hora.strftime('%H:%M') }}</p>
+            <p><i class="fa-solid fa-location-dot me-1"></i><strong>Lugar:</strong> {{ partido.lugar }}</p>
+            <p><i class="fa-solid fa-user-tie me-1"></i><strong>Organizador:</strong> {{ partido.organizador.username }}</p>
+            <p><i class="fa-solid fa-users-line me-1"></i><strong>Máximo por equipo:</strong> {{ partido.max_jugadores }}</p>
+
+{% if partido.cerrado %}
+<div class="alert alert-success text-center py-4" role="alert">
+    <div class="row align-items-center justify-content-center">
+        <div class="col-md-5">
+            <h3 class="text-warning mb-1">
+                <i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}
+            </h3>
+            {% set goles = partido.resultado.split('-') %}
+            {% if goles|length == 2 %}
+                <h4 class="fw-bold">{{ goles[0] }}</h4>
+            {% endif %}
+        </div>
+        <div class="col-md-2">
+            <span class="fs-3 fw-bold text-muted">VS</span>
+        </div>
+        <div class="col-md-5">
+            <h3 class="text-success mb-1">
+                {{ partido.equipo2 }} <i class="fas fa-shield-heart ms-2"></i>
+            </h3>
+            {% if goles|length == 2 %}
+                <h4 class="fw-bold">{{ goles[1] }}</h4>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        {% if goles|length == 2 %}
+            {% set goles1 = goles[0]|int %}
+            {% set goles2 = goles[1]|int %}
+            {% if goles1 > goles2 %}
+                <div>
+                    <span class="display-6 text-warning fw-bold">{{ partido.equipo1 }} GANADOR</span>
+                    <p class="text-dark mt-2">
+                        <i class="fas fa-lock me-1"></i>El partido ha sido cerrado. Solo el organizador puede modificar el resultado.
+                    </p>
+                </div>
+            {% elif goles2 > goles1 %}
+                <div>
+                    <span class="display-6 text-success fw-bold">{{ partido.equipo2 }} GANADOR</span>
+                    <p class="text-dark mt-2">
+                        <i class="fas fa-lock me-1"></i>El partido ha sido cerrado. Solo el organizador puede modificar el resultado.
+                    </p>
+                </div>
+            {% else %}
+                <div>
+                    <span class="display-6 text-muted fw-bold">EMPATE</span>
+                    <p class="text-dark mt-2">
+                        <i class="fas fa-lock me-1"></i>El partido ha sido cerrado. Solo el organizador puede modificar el resultado.
+                    </p>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<p>
+    <i class="fa-solid fa-medal me-1"></i><strong>Resultado:</strong>
+    {% if current_user.id == partido.organizador_id and not partido.esta_expirado() %}
+        <a href="{{ url_for('registrar_resultado', partido_id=partido.id) }}" class="btn btn-outline-primary btn-sm">Registrar resultado</a>
+    {% else %}
+        <span class="text-muted">No disponible</span>
+    {% endif %}
+</p>
+{% endif %}
+
+
+
+
+
+            {% if current_user.id == partido.organizador_id and not partido.cerrado and not partido.esta_expirado() %}
+                <div class="alert alert-warning mt-3">
+                    <i class="fa-solid fa-clock-rotate-left me-1"></i> Tienes hasta {{ partido.tiempo_limite().strftime('%d/%m/%Y %H:%M') }} para registrar el resultado.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Invitaciones por amigos -->
+    {% if current_user.id == partido.organizador_id and partido.solo_por_invitacion and not partido.cerrado %}
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title"><i class="fas fa-user-plus me-2"></i>Invitar Amigos</h4>
+                {% if amigos %}
+                    <ul class="list-group">
+                        {% for amigo in amigos if amigo.id not in invitados_ids %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center" id="amigo-{{ amigo.id }}">
+                                {{ amigo.username }}
+                                <form method="post" action="{{ url_for('invitar_usuario', partido_id=partido.id, user_id=amigo.id) }}" class="form-invitar-amigo" data-amigo-id="{{ amigo.id }}">
+                                    <button type="submit" class="btn btn-outline-success btn-sm">Invitar</button>
+                                </form>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No tienes amigos disponibles para invitar.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Enlace Público -->
+    {% if current_user.id == partido.organizador_id and not partido.solo_por_invitacion %}
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-link me-2"></i>Enlace público</h5>
+                <div class="input-group">
+                    <input type="text" id="link-invitacion" class="form-control" value="{{ request.host_url }}unirse_por_enlace/{{ partido.enlace_invitacion }}" readonly>
+                    <button class="btn btn-outline-secondary" onclick="copiarLink()"><i class="fas fa-copy"></i> Copiar</button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Buscador de usuarios -->
+    {% if current_user.id == partido.organizador_id and not partido.cerrado %}
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-magnifying-glass me-2"></i>Buscar usuarios</h5>
+                <input type="text" id="buscador-usuarios" class="form-control mb-3" placeholder="Escribe un nombre de usuario...">
+                <div id="resultados-busqueda"></div>
+            </div>
+        </div>
+    {% endif %}
+
+    
+    <!-- Jugadores inscritos -->
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title text-center mb-4"><i class="fas fa-users me-2"></i>Jugadores inscritos</h4>
+        <div class="row">
+            {% set equipos = [
+                (partido.equipo1, 'warning', 'fas fa-shield-alt'),
+                (partido.equipo2, 'success', 'fas fa-shield-heart')
+            ] %}
+            {% for equipo, color, icono in equipos %}
+                <div class="col-md-6 mb-3">
+                    <div class="p-3 bg-{{ color }}-subtle rounded">
+                        <h5 class="text-{{ color }}">
+                            <i class="{{ icono }} me-2"></i>{{ equipo }}
+                        </h5>
+                        <ul class="list-group">
+                            {% set jugadores = partido.inscripciones | selectattr("equipo", "equalto", equipo) | list %}
+                            {% if jugadores %}
+                                {% for inscripcion in jugadores %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <a href="{{ url_for('perfil_usuario', user_id=inscripcion.user.id) }}">
+                                                {{ inscripcion.user.username }}
+                                            </a>
+                                            <small class="text-muted">
+                                                {% set promedio = calificacion_jugador_en_partido(inscripcion.user, partido.id) %}
+                                                {% if promedio %}
+                                                    - Promedio: {{ promedio }}/10
+                                                {% else %}
+                                                    - Sin calificaciones
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <div>
+                                            {% if current_user.is_authenticated and inscripcion.user.id != current_user.id and ya_inscrito %}
+                                                {% set ya_calificado = inscripcion.user.calificaciones_recibidas
+                                                    | selectattr("partido_id", "equalto", partido.id)
+                                                    | selectattr("evaluador_id", "equalto", current_user.id)
+                                                    | list | length > 0 %}
+                                                {% if partido.cerrado %}
+                                                    {% if not ya_calificado %}
+                                                        <a href="{{ url_for('calificar_jugador_individual', partido_id=partido.id, jugador_id=inscripcion.user.id) }}" class="btn btn-outline-primary btn-sm">Calificar</a>
+                                                    {% else %}
+                                                        <span class="text-success">Ya calificado</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <small class="text-muted">Disponible tras cierre</small>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="list-group-item text-muted">No hay jugadores en este equipo.</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+
+    <!-- Acciones del usuario -->
+    <div class="text-center mt-4">
+        {% if current_user.is_authenticated %}
+            {% if partido.cerrado %}
+                <p class="text-muted">Este partido está cerrado.</p>
+            {% elif ya_inscrito %}
+                <p class="text-success">Ya estás inscrito en este partido.</p>
+            {% elif invitado and not partido.cerrado %}
+                <a href="{{ url_for('unirse_partido', partido_id=partido.id) }}" class="btn btn-success">Unirse al partido</a>
+            {% elif not partido.solo_por_invitacion %}
+                <a href="{{ url_for('unirse_partido', partido_id=partido.id) }}" class="btn btn-primary">Unirse al partido</a>
+            {% endif %}
+
+            {% if current_user.id == partido.organizador_id %}
+                <form action="{{ url_for('eliminar_partido', partido_id=partido.id) }}" method="POST" class="mt-3" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este partido?');">
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Eliminar Partido</button>
+                </form>
+            {% endif %}
+        {% endif %}
+
+        <div class="mt-4">
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left"></i> Volver al listado</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function copiarLink() {
+    const input = document.getElementById('link-invitacion');
+    input.select();
+    document.execCommand('copy');
+    alert("Enlace copiado al portapapeles.");
+}
+
+const partidoId = '{{ partido.id }}';
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll('.form-invitar-amigo').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const amigoId = this.dataset.amigoId;
+            fetch(this.action, { method: 'POST' })
+                .then(res => {
+                    if (res.ok) {
+                        const li = document.getElementById(`amigo-${amigoId}`);
+                        li.innerHTML = `<span>${li.textContent.trim()}</span> <span class="text-success">Invitación enviada</span>`;
+                    }
+                });
+        });
+    });
+
+    const input = document.getElementById('buscador-usuarios');
+    const resultados = document.getElementById('resultados-busqueda');
+
+    input.addEventListener('input', function () {
+        const query = input.value.trim();
+        resultados.innerHTML = "";
+
+        if (query.length < 2) return;
+
+        fetch(`/buscar_usuarios_ajax?q=${encodeURIComponent(query)}&partido_id=${partidoId}`)
+            .then(response => response.json())
+            .then(data => {
+                resultados.innerHTML = '';
+                if (data.length === 0) {
+                    resultados.innerHTML = '<p class="text-muted">No se encontraron usuarios.</p>';
+                    return;
+                }
+
+                data.forEach(user => {
+                    const div = document.createElement('div');
+                    div.classList.add('mb-2');
+                    div.innerHTML = `
+                        <strong>${user.username}</strong>
+                        <span id="estado-${user.id}">
+                            ${user.ya_invitado
+                                ? '<span class="text-success">Ya invitado</span>'
+                                : `<button class="btn btn-outline-primary btn-sm" onclick="invitarUsuario(partidoId, ${user.id})">Invitar</button>`}
+                        </span>
+                        <hr>
+                    `;
+                    resultados.appendChild(div);
+                });
+            });
+    });
+});
+
+function invitarUsuario(partidoId, userId) {
+    fetch(`/invitar_usuario/${partidoId}/${userId}`, { method: 'POST' })
+        .then(res => {
+            if (res.ok) {
+                const estado = document.getElementById(`estado-${userId}`);
+                estado.innerHTML = '<span class="text-success">Invitación enviada</span>';
+            } else {
+                alert("Error al enviar la invitación.");
+            }
+        })
+        .catch(() => {
+            alert("Error de red al enviar la invitación.");
+        });
+}
+</script>
+{% endblock %}

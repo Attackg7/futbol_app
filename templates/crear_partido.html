@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Crear Partido{% endblock %}
+
+{% block content %}
+<div class="container py-5 d-flex justify-content-center">
+    <div class="card shadow-sm p-4 w-100" style="max-width: 700px;">
+        <h3 class="mb-4 text-primary text-center">Crear Nuevo Partido</h3>
+        <form method="POST">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="fecha" class="form-label">Fecha</label>
+                    <input type="date" id="fecha" name="fecha" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="hora" class="form-label">Hora</label>
+                    <input type="time" id="hora" name="hora" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="lugar" class="form-label">Lugar</label>
+                <input type="text" id="lugar" name="lugar" class="form-control" required>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="equipo1" class="form-label">Equipo 1</label>
+                    <input type="text" id="equipo1" name="equipo1" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="equipo2" class="form-label">Equipo 2</label>
+                    <input type="text" id="equipo2" name="equipo2" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="max_jugadores" class="form-label">Máximo jugadores por equipo</label>
+                <input type="number" id="max_jugadores" name="max_jugadores" min="1" max="20" class="form-control" required>
+            </div>
+
+            <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" id="solo_por_invitacion" name="solo_por_invitacion">
+                <label class="form-check-label" for="solo_por_invitacion">
+                    Solo por invitación
+                </label>
+            </div>
+
+            {% if amigos %}
+                <fieldset class="mb-4">
+                    <legend class="fs-6">Invitar amigos al partido:</legend>
+                    <div class="row row-cols-2 row-cols-md-3 g-2">
+                        {% for amigo in amigos %}
+                        <div class="form-check d-flex align-items-center">
+                            <input class="form-check-input me-2" type="checkbox" name="invitados" value="{{ amigo.id }}" id="amigo{{ amigo.id }}">
+                            <label class="form-check-label d-flex align-items-center" for="amigo{{ amigo.id }}">
+                                <img src="{{ url_for('static', filename='profile_pics/' ~ amigo.foto_perfil) }}" width="30" height="30" class="rounded-circle me-2">
+                                {{ amigo.username }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+            {% else %}
+                <p class="text-muted">No tienes amigos para invitar aún.</p>
+            {% endif %}
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Crear Partido</button>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Cancelar y volver</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

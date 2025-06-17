@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle del Partido{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg rounded">
+        <div class="card-body">
+            <h1 class="card-title text-center mb-4">Unirse al Partido</h1>
+            
+            <div class="mb-4">
+                <p><strong>📅 Fecha:</strong> {{ partido.fecha_hora.strftime('%d/%m/%Y') }} &nbsp;&nbsp;
+                <strong>⏰ Hora:</strong> {{ partido.fecha_hora.strftime('%H:%M') }}</p>
+                <p><strong>📍 Lugar:</strong> {{ partido.lugar }}</p>
+                <p><strong>👥 Máximo jugadores por equipo:</strong> {{ partido.max_jugadores }}</p>
+            </div>
+
+            <div class="mb-4">
+                <h4 class="mb-3">⚔ Equipos</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="border p-3 rounded {% if equipo1_lleno %}border-danger{% else %}border-success{% endif %}">
+                            <h5>{{ partido.equipo1 }}</h5>
+                            <p>{{ count_equipo1 }}/{{ partido.max_jugadores }} jugadores</p>
+                            {% if equipo1_lleno %}
+                                <p class="text-danger">Este equipo ya está completo.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border p-3 rounded {% if equipo2_lleno %}border-danger{% else %}border-success{% endif %}">
+                            <h5>{{ partido.equipo2 }}</h5>
+                            <p>{{ count_equipo2 }}/{{ partido.max_jugadores }} jugadores</p>
+                            {% if equipo2_lleno %}
+                                <p class="text-danger">Este equipo ya está completo.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h4 class="mb-3">📝 Elige a qué equipo unirte:</h4>
+                <form method="POST">
+                    <div class="form-check">
+                        {% if not equipo1_lleno %}
+                            <input class="form-check-input" type="radio" id="equipo1" name="equipo" value="{{ partido.equipo1 }}" required>
+                            <label class="form-check-label" for="equipo1">{{ partido.equipo1 }}</label>
+                        {% endif %}
+                    </div>
+                    <div class="form-check">
+                        {% if not equipo2_lleno %}
+                            <input class="form-check-input" type="radio" id="equipo2" name="equipo" value="{{ partido.equipo2 }}" required>
+                            <label class="form-check-label" for="equipo2">{{ partido.equipo2 }}</label>
+                        {% endif %}
+                    </div>
+
+                    {% if not equipo1_lleno or not equipo2_lleno %}
+                        <button type="submit" class="btn btn-primary mt-3">Unirse al Partido</button>
+                    {% else %}
+                        <div class="alert alert-warning mt-3">
+                            Ambos equipos están completos. No es posible unirse.
+                        </div>
+                    {% endif %}
+                </form>
+            </div>
+
+            <div class="text-center">
+                <a href="{{ url_for('detalle_partido', partido_id=partido.id) }}" class="btn btn-outline-secondary">
+                    ← Volver al detalle del partido
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
