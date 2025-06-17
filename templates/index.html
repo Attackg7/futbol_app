@@ -165,7 +165,9 @@ h1.display-5 {
 }
 </style>
 
-
+<div class="alert alert-info text-center mb-4">
+    🕒 Hora del servidor: {{ now.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z') }}
+</div>
 
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -222,7 +224,7 @@ h1.display-5 {
      data-equipo2="{{ partido.equipo2 | lower }}"
      data-lugar="{{ partido.lugar | lower }}"
      data-fecha="{{ partido.fecha_hora.strftime('%Y-%m-%d') }}"
-     data-fecha-hora="{{ partido.fecha_hora.isoformat() }}"
+     data-fecha-hora="{{ partido.fecha_hora.astimezone().isoformat() }}"
      data-resultado="{{ partido.resultado }}"
      data-cerrado="{{ 'true' if partido.cerrado else 'false' }}"
      data-estado="{% if partido.cerrado %}terminado{% elif partido.fecha_hora <= now %}en-curso{% else %}proximo{% endif %}">
@@ -420,15 +422,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         cards.forEach(card => {
             const estadoEtiqueta = card.querySelector('.estado-etiqueta');
-            const fechaStr = card.dataset.fechaHora; // Asegúrate que este dataset existe
-            const resultado = card.dataset.resultado; // nuevo atributo para resultado
-            const cerrado = card.dataset.cerrado === "true"; // nuevo atributo para cerrado
+            const fechaStr = card.dataset.fechaHora;
+            const resultado = card.dataset.resultado;
+            const cerrado = card.dataset.cerrado === "true";
+            console.log("Fecha partida:", fechaStr, "| Interpretado:", new Date(fechaStr), "| Ahora:", new Date());
 
             if (!fechaStr || !estadoEtiqueta) return;
 
+            // Convertir la fecha a zona local manualmente
             const fechaPartido = new Date(fechaStr);
+            
+
             const ahora = new Date();
-            const diffHoras = (ahora - fechaPartido) / (1000 * 60 * 60);
+            const diffHoras = (ahora - fechaLocal) / (1000 * 60 * 60);
 
             let nuevoEstado = '';
             let claseNueva = '';
@@ -450,17 +456,14 @@ document.addEventListener('DOMContentLoaded', () => {
             estadoEtiqueta.textContent = nuevoEstado;
             estadoEtiqueta.className = 'estado-etiqueta ' + claseNueva;
 
-            // Actualiza el filtro
             card.dataset.estado = claseNueva;
         });
     };
 
-    // Actualiza cada minuto
     updateEstados();
     setInterval(updateEstados, 60000);
 });
-
-
 </script>
+
 
 {% endblock %}
