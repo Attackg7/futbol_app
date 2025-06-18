@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Fútbol App{% endblock %}</title>
+    <title>{% block title %}Cancheros{% endblock %}</title>
 
     <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -21,6 +21,44 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         padding-top: 70px;
         color: #1e293b;
+    }
+    .notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: #dc3545; /* Rojo notificación */
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 999px;
+    line-height: 1;
+    z-index: 10;
+    min-width: 16px;
+    text-align: center;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease-in-out;
+}
+
+.nav-link:hover .notification-badge {
+  transform: scale(1.1);
+}
+    .notification-item {
+    transition: background-color 0.3s ease;
+}
+
+.notification-item:hover {
+    background-color: #f8f9fa; /* Gris claro */
+    cursor: pointer;
+}
+     .nav-link.nav-active,
+    .nav-link.nav-active span {
+        color: #facc15 !important;
+    }
+
+    .nav-link.nav-active .nav-profile-img {
+        border: 2px solid #facc15;
     }
 
     .navbar {
@@ -88,15 +126,23 @@
     }
 
     .notification-badge {
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        background-color: #facc15; /* amarillo vibrante */
-        color: white;
-        font-size: 0.65rem;
-        border-radius: 50%;
-        padding: 3px 6px;
-    }
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: #dc3545; /* Rojo notificación */
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 999px;
+    line-height: 1;
+    z-index: 10;
+    min-width: 16px;
+    text-align: center;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease-in-out;
+}
 
     .dropdown-menu li {
         font-size: 0.85rem;
@@ -191,6 +237,77 @@
         left: 0;
         white-space: nowrap;
     }
+    .navbar .nav-link.active i {
+    color: #facc15 !important; /* Amarillo deportivo */
+    transform: scale(1.2);
+    transition: transform 0.2s, color 0.2s;
+}
+
+.navbar .nav-link i {
+    transition: transform 0.2s, color 0.2s;
+}
+
+.navbar .nav-link:hover i {
+    color: #fef08a !important;
+    transform: scale(1.1);
+}
+.navbar .nav-link:hover i {
+    box-shadow: 0 0 6px rgba(250, 204, 21, 0.4); /* sombra amarilla */
+    border-radius: 50%;
+}
+.nav-link {
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.nav-link:hover {
+    color: #fef08a !important; /* Amarillo suave al pasar el mouse */
+    transform: scale(1.1);
+}
+
+.nav-link.nav-active {
+    color: #facc15 !important; /* Amarillo activo */
+}
+.nav-item .nav-profile-img {
+    transition: transform 0.2s ease;
+}
+.nav-item:hover .nav-profile-img {
+    transform: scale(1.1);
+    border: 2px solid #facc15;
+}
+ .nav-link {
+        transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .nav-link:hover {
+        color: #fef08a !important; /* Color al pasar el mouse */
+        transform: scale(1.1);
+    }
+
+    .nav-link.nav-active {
+        color: #facc15 !important; /* Color del ícono activo */
+    }
+
+    .nav-item .nav-profile-img {
+        transition: transform 0.2s ease;
+        border-radius: 50%;
+    }
+
+    .nav-item:hover .nav-profile-img {
+        transform: scale(1.1);
+        border: 2px solid #facc15;
+    }
+     .card:hover {
+        background-color: #f8f9fa;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+    .dropdown-menu {
+        border-radius: 12px;
+    }
+
+    .notificacion-seccion {
+        padding: 0 4px;
+    }
 
     @media (max-width: 768px) {
         main.container.contenido {
@@ -236,7 +353,7 @@
         </a>
         {% endif %}
         <a class="navbar-brand" href="{{ url_for('index') if current_user.is_authenticated else url_for('inicio') }}">
-            <i class="bi bi-soccer-ball"></i> Fútbol App
+            <i class="bi bi-soccer-ball"></i> Cancheros
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
                 aria-controls="mainNavbar" aria-expanded="false" aria-label="Menú">
@@ -254,11 +371,14 @@
             <ul class="navbar-nav ms-auto align-items-center">
                 {% if current_user.is_authenticated %}
                     <li class="nav-item me-3 d-flex align-items-center gap-2">
-                        <a href="{{ url_for('perfil_usuario', user_id=current_user.id) }}" class="d-flex align-items-center text-decoration-none text-white" data-bs-toggle="tooltip" title="Mi perfil">
-                            <img src="{{ url_for('static', filename='profile_pics/' ~ current_user.foto_perfil) }}" alt="Perfil" class="nav-profile-img">
-                            <span class="ms-2">{{ current_user.username }}</span>
-                        </a>
-                    </li>
+    <a href="{{ url_for('perfil_usuario', user_id=current_user.id) }}"
+       class="d-flex align-items-center text-decoration-none nav-link {% if request.endpoint == 'perfil_usuario' %}nav-active{% endif %}"
+       data-bs-toggle="tooltip" title="Mi perfil">
+        <img src="{{ url_for('static', filename='profile_pics/' ~ current_user.foto_perfil) }}"
+             alt="Perfil" class="nav-profile-img" width="30" height="30">
+        <span class="ms-2 text-white">{{ current_user.username }}</span>
+    </a>
+</li>
                     <li class="nav-item dropdown me-2 notification-icon" data-bs-toggle="tooltip" title="Notificaciones">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="bi bi-bell"></i>
@@ -267,53 +387,66 @@
                             {% endif %}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end p-3" style="min-width: 360px;" id="notification-menu">
-                            <div class="notificaciones-container">
-                                <div class="notificacion-seccion">
-                                    <span class="fw-bold text-primary">Partidos</span>
-                                    {% for inv in current_user.invitaciones_recibidas %}
-                                        {% if not inv.partido.cerrado %}
-                                            <li id="inv-{{ inv.id }}">
-                                                <a href="{{ url_for('unirse_partido', partido_id=inv.partido.id) }}" class="text-decoration-none text-dark d-block">
-                                                    <small>{{ inv.partido.lugar }}<br>{{ inv.partido.fecha_hora.strftime('%d/%m %H:%M') }}</small>
-                                                </a>
-                                                <div class="d-flex justify-content-end mt-1">
-                                                    <button class="btn btn-sm btn-success me-1" onclick="aceptarInvitacion('{{ inv.id }}')">✓</button>
-                                                    <button class="btn btn-sm btn-danger" onclick="rechazarInvitacion('{{ inv.id }}')">✗</button>
-                                                </div>
-                                            </li>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
+    <div class="notificaciones-container">
+        <!-- Partidos -->
+        <div class="notificacion-seccion mb-3">
+            <h6 class="text-warning fw-bold mb-2">Partidos</h6>
+            {% for inv in current_user.invitaciones_recibidas %}
+                {% if not inv.partido.cerrado %}
+                <li id="inv-{{ inv.id }}" class="notification-item border rounded p-2 mb-2 d-flex">
+                    <div class="me-2">
+                        <i class="bi bi-calendar2-event-fill text-warning fs-4"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="small text-muted">Invitación a partido en</div>
+                        <div class="fw-semibold">{{ inv.partido.lugar }}</div>
+                        <div class="text-muted small">{{ inv.partido.fecha_hora.strftime('%d/%m %H:%M') }}</div>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-success me-1" onclick="aceptarInvitacion('{{ inv.id }}')">Aceptar</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="rechazarInvitacion('{{ inv.id }}')">Rechazar</button>
+                        </div>
+                    </div>
+                </li>
+                {% endif %}
+            {% endfor %}
+        </div>
 
-                                <div class="notificacion-seccion">
-                                    <span class="fw-bold text-primary">Amigos</span>
-                                    {% for solicitud in current_user.amistades_recibidas %}
-                                        {% if not solicitud.confirmada %}
-                                            <li id="sol-{{ solicitud.id }}">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <small>{{ solicitud.usuario.username }}</small>
-                                                    <div>
-                                                        <button class="btn btn-sm btn-success me-1" onclick="aceptarAmistad('{{ solicitud.id }}')">✓</button>
-                                                        <button class="btn btn-sm btn-danger" onclick="rechazarAmistad('{{ solicitud.id }}')">✗</button>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </ul>
-                    </li>
-                    <li class="nav-item" data-bs-toggle="tooltip" title="Eventos">
-                        <a class="nav-link" href="{{ url_for('index') }}">
-                            <i class="bi bi-calendar-event"></i>
-                        </a>
+        <!-- Amigos -->
+        <div class="notificacion-seccion">
+            <h6 class="text-success fw-bold mb-2">Amigos</h6>
+            {% for solicitud in current_user.amistades_recibidas %}
+                {% if not solicitud.confirmada %}
+                <li id="sol-{{ solicitud.id }}" class="notification-item border rounded p-2 mb-2 d-flex">
+                    <div class="me-2">
+                        <i class="bi bi-person-plus-fill text-success fs-4"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="small text-muted">Solicitud de amistad</div>
+                        <div class="fw-semibold">{{ solicitud.usuario.username }}</div>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-success me-1" onclick="aceptarAmistad('{{ solicitud.id }}')">Aceptar</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="rechazarAmistad('{{ solicitud.id }}')">Rechazar</button>
+                        </div>
+                    </div>
+                </li>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</ul>
                     </li>
                     <li class="nav-item" data-bs-toggle="tooltip" title="Crear partido">
-                        <a class="nav-link" href="{{ url_for('crear_partido') }}">
-                            <i class="bi bi-plus-circle"></i>
-                        </a>
-                    </li>
+    <a class="nav-link {% if request.endpoint == 'crear_partido' %}nav-active{% endif %}" href="{{ url_for('crear_partido') }}">
+        <i class="bi bi-plus-circle"></i>
+    </a>
+</li>
+
+<li class="nav-item" data-bs-toggle="tooltip" title="Eventos">
+    <a class="nav-link {% if request.endpoint == 'index' %}nav-active{% endif %}" href="{{ url_for('index') }}">
+        <i class="bi bi-calendar-event"></i>
+    </a>
+</li>
+
                     <li class="nav-item" data-bs-toggle="tooltip" title="Cerrar sesión">
                         <a class="nav-link text-warning" href="{{ url_for('logout') }}">
                             <i class="bi bi-box-arrow-right"></i>
