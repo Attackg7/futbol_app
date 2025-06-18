@@ -25,10 +25,13 @@
     10.0: "¡Jugador excepcional!"
 } %}
 {% set promedio = usuario.promedio_calificaciones() | float %}
+{% set total_calificaciones = calificaciones | length %}
 {% set promedio_aprox = ((promedio * 2) | round(0, 'common')) / 2 %}
 {% set promedio_redondeado = promedio_aprox %}
 {% set descripcion = descripciones.get(promedio_aprox, 'Sin descripción') %}
+
 {% set badge_class = (
+    'light text-dark' if total_calificaciones == 0 else
     'danger' if promedio_redondeado <= 2 else
     'warning' if promedio_redondeado <= 4 else
     'secondary' if promedio_redondeado <= 5.5 else
