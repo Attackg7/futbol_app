@@ -83,6 +83,20 @@ def index():
 
     for partido in partidos:
         inscripciones = partido.inscripciones
+        count_total = len(inscripciones)
+        total_requerido = partido.max_jugadores * 2
+        porcentaje_actual = count_total / total_requerido if total_requerido > 0 else 0
+        cancelado_por_falta = False
+
+        if not partido.cerrado and partido.fecha_hora <= now and porcentaje_actual < 0.7:
+            tiempo_desde_inicio = (now - partido.fecha_hora).total_seconds()
+            if tiempo_desde_inicio >= 600:
+                db.session.delete(partido)
+                db.session.commit()
+                continue
+            else:
+                cancelado_por_falta = True
+
         count_equipo1 = sum(1 for i in inscripciones if i.equipo == partido.equipo1)
         count_equipo2 = sum(1 for i in inscripciones if i.equipo == partido.equipo2)
         equipo1_lleno = count_equipo1 >= partido.max_jugadores
@@ -90,8 +104,16 @@ def index():
         cupo_disponible = not (equipo1_lleno and equipo2_lleno)
 
         user_inscrito = False
+        puede_calificar = False
         if current_user.is_authenticated:
             user_inscrito = any(i.user_id == current_user.id for i in inscripciones)
+            if user_inscrito and partido.cerrado:
+                jugadores_a_calificar = [i.user_id for i in inscripciones if i.user_id != current_user.id]
+                ya_calificados = [
+                    c.evaluado_id for c in partido.calificaciones
+                    if c.evaluador_id == current_user.id
+                ]
+                puede_calificar = any(uid not in ya_calificados for uid in jugadores_a_calificar)
 
         datos_partidos.append({
             'partido': partido,
@@ -100,11 +122,36 @@ def index():
             'equipo1_lleno': equipo1_lleno,
             'equipo2_lleno': equipo2_lleno,
             'cupo_disponible': cupo_disponible,
-            'user_inscrito': user_inscrito
+            'user_inscrito': user_inscrito,
+            'puede_calificar': puede_calificar,
+            'cancelado_por_falta': cancelado_por_falta,
+            'porcentaje_inscritos': porcentaje_actual
         })
 
+    # ORDENAR
+    proximos = []
+    en_curso = []
+    terminados = []
+
+    for datos in datos_partidos:
+        partido = datos['partido']
+        cancelado = datos.get('cancelado_por_falta', False)
+        porcentaje = datos.get('porcentaje_inscritos', 0)
+        ya_empezo = partido.fecha_hora <= now
+
+        if cancelado:
+            terminados.append(datos)
+        elif partido.cerrado or partido.resultado:
+            terminados.append(datos)
+        elif ya_empezo and porcentaje >= 0.7:
+            en_curso.append(datos)
+        else:
+            proximos.append(datos)
+
+    datos_partidos = proximos + en_curso + terminados
+
     return render_template('index.html', datos_partidos=datos_partidos, now=now)
-   
+
 
 
 
@@ -297,13 +344,44 @@ from flask import render_template, request, redirect, url_for, flash
 from datetime import datetime
 from models import db, Partido
 
+@app.route('/partido/<int:partido_id>/editar_resultado', methods=['GET', 'POST'])
+@login_required
+def editar_resultado(partido_id):
+    partido = Partido.query.get_or_404(partido_id)
+
+    if current_user.id != partido.organizador_id:
+        abort(403)
+
+    if not partido.resultado:
+        flash("Este partido aún no tiene un resultado registrado.", "warning")
+        return redirect(url_for('detalle_partido', partido_id=partido_id))
+
+    if request.method == 'POST':
+        try:
+            goles1 = int(request.form['goles_equipo1'])
+            goles2 = int(request.form['goles_equipo2'])
+            partido.resultado = f"{goles1}-{goles2}"
+            db.session.commit()
+            flash("Resultado actualizado correctamente.", "success")
+            return redirect(url_for('detalle_partido', partido_id=partido.id))
+        except ValueError:
+            flash("Ingresa números válidos para los goles.", "danger")
+
+    return render_template('registrar_resultado.html', partido=partido)
+
 @app.route('/partido/<int:partido_id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar_partido(partido_id):
     partido = Partido.query.get_or_404(partido_id)
 
+    now = datetime.now()
+
     if partido.cerrado:
         flash("Este partido ya fue cerrado y no puede ser editado.")
+        return redirect(url_for('detalle_partido', partido_id=partido_id))
+
+    if partido.fecha_hora <= now:
+        flash("El partido ya está en curso o finalizado. No puede ser editado.")
         return redirect(url_for('detalle_partido', partido_id=partido_id))
 
     if current_user.id != partido.organizador_id:
@@ -495,28 +573,51 @@ def subir_foto():
 
     return jsonify({'error': 'Archivo no válido'}), 400
 
+from datetime import timedelta
+
 @app.route('/partido/<int:partido_id>/registrar_resultado', methods=['GET', 'POST'])
 @login_required
 def registrar_resultado(partido_id):
+    from datetime import timedelta
+
     partido = Partido.query.get_or_404(partido_id)
 
-    # Solo el organizador puede registrar el resultado
     if current_user.id != partido.organizador_id:
         abort(403)
 
-    # Si el partido ya fue cerrado
     if partido.cerrado:
         flash("Este partido ya está cerrado.", "warning")
         return redirect(url_for('detalle_partido', partido_id=partido_id))
 
-    # Si el partido expiró, eliminarlo
+    # Reglas: 2 horas después del inicio
+    tiempo_minimo = partido.fecha_hora + timedelta(hours=1)
+    if datetime.now() < tiempo_minimo:
+        flash("Debes esperar al menos 1 horas después del inicio del partido para registrar el resultado.", "warning")
+        return redirect(url_for('detalle_partido', partido_id=partido_id))
+
+    # Verifica si ambos equipos tienen al menos el 90% de jugadores
+    inscripciones = partido.inscripciones
+    count_equipo1 = sum(1 for i in inscripciones if i.equipo == partido.equipo1)
+    count_equipo2 = sum(1 for i in inscripciones if i.equipo == partido.equipo2)
+
+    umbral = int(round(partido.max_jugadores * 0.7))
+
+    if count_equipo1 < umbral or count_equipo2 < umbral:
+        # Partido se cancela
+        partido.resultado = None
+        partido.cerrado = True
+        db.session.commit()
+        flash("❌ Partido cancelado por falta de jugadores suficientes en ambos equipos.", "danger")
+        return redirect(url_for('detalle_partido', partido_id=partido_id))
+
+    # Si expiró, eliminar
     if partido.esta_expirado():
         db.session.delete(partido)
         db.session.commit()
         flash("Tiempo expirado para registrar el resultado. El partido fue eliminado.", "danger")
         return redirect(url_for('index'))
 
-    # Manejar envío del formulario
+    # Procesa POST
     if request.method == 'POST':
         try:
             goles1 = int(request.form.get('goles_equipo1'))
@@ -535,6 +636,7 @@ def registrar_resultado(partido_id):
             flash("Ingresa un resultado válido con números.", "danger")
 
     return render_template('registrar_resultado.html', partido=partido)
+
 
 
 @app.route('/buscar')

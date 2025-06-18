@@ -28,7 +28,7 @@
 {% set total_calificaciones = calificaciones | length %}
 {% set promedio_aprox = ((promedio * 2) | round(0, 'common')) / 2 %}
 {% set promedio_redondeado = promedio_aprox %}
-{% set descripcion = descripciones.get(promedio_aprox, 'Sin descripción') %}
+{% set descripcion = descripciones.get(promedio_aprox, 'Sin calificaciones') %}
 
 {% set badge_class = (
     'light text-dark' if total_calificaciones == 0 else

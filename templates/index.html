@@ -1,12 +1,19 @@
-{% extends 'base.html' %}
-{% block title %}Partidos de Fútbol{% endblock %}
-{% block content %}
+{% extends 'base.html' %} {% block title %}Partidos de Fútbol{% endblock %} {%
+block content %}
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+/>
+<link
+  href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap"
+  rel="stylesheet"
+/>
 
 <style>
-.equipo-horizontal {
+  .equipo-horizontal {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -17,9 +24,9 @@
     flex-wrap: wrap;
     word-break: break-word;
     overflow: hidden;
-}
+  }
 
-.equipo-horizontal .nombre {
+  .equipo-horizontal .nombre {
     flex: 1;
     text-transform: uppercase;
     font-size: 0.85rem;
@@ -28,14 +35,14 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
+  }
 
-.equipo-horizontal .resultado-final {
+  .equipo-horizontal .resultado-final {
     flex-shrink: 0;
-}
+  }
 
-/* Resultado final compacto y elegante */
-.resultado-final {
+  /* Resultado final compacto y elegante */
+  .resultado-final {
     font-size: 0.8rem;
     font-weight: 600;
     background-color: #ffffff;
@@ -46,48 +53,52 @@
     min-width: 42px;
     text-align: center;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
+  }
 
-.equipo1-color { color: #ffc107; }
-.equipo2-color { color: #28a745; }
+  .equipo1-color {
+    color: #ffc107;
+  }
+  .equipo2-color {
+    color: #28a745;
+  }
 
-.card-body {
-    font-family: 'Rubik', sans-serif;
+  .card-body {
+    font-family: "Rubik", sans-serif;
     display: flex;
     flex-direction: column;
     height: 100%;
     overflow: hidden;
     padding: 1.2rem;
-}
+  }
 
-.flex-grow-1 {
+  .flex-grow-1 {
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
-}
+  }
 
-.ganador-icono {
+  .ganador-icono {
     font-size: 2rem;
     line-height: 1;
-}
+  }
 
-.ganador-destacado {
+  .ganador-destacado {
     font-size: 1.1rem;
     font-weight: 800;
-}
+  }
 
-.card {
+  .card {
     font-size: 0.87rem;
     border-radius: 1rem;
     transition: transform 0.2s ease;
-}
+  }
 
-.card:hover {
+  .card:hover {
     transform: translateY(-4px);
-}
+  }
 
-/* Etiquetas de estado */
-.estado-etiqueta {
+  /* Etiquetas de estado */
+  .estado-etiqueta {
     position: absolute;
     top: 8px;
     left: 8px;
@@ -105,365 +116,463 @@
     letter-spacing: 0.3px;
     line-height: 1;
     transition: background 0.3s ease;
-}
+  }
 
-.estado-etiqueta i {
+  .estado-etiqueta i {
     font-size: 0.7rem;
-}
+  }
 
-.estado-etiqueta.terminado {
+  .estado-etiqueta.terminado {
     background: linear-gradient(135deg, #6c757d, #495057);
-}
+  }
 
-.estado-etiqueta.en-curso {
+  .estado-etiqueta.en-curso {
     background: linear-gradient(135deg, #0d6efd, #0b5ed7);
-}
+  }
 
-.estado-etiqueta.proximo {
+  .estado-etiqueta.proximo {
     background: linear-gradient(135deg, #f9ca24, #f6b93b);
     color: #212529;
-}
+  }
 
-.badge {
+  .badge {
     font-size: 0.65rem;
     padding: 0.35em 0.6em;
-}
+  }
 
-.alert {
+  .alert {
     font-size: 0.75rem;
     padding: 0.4rem 0.8rem;
-}
+  }
 
-.btn {
+  .btn {
     font-size: 0.75rem;
     padding: 0.375rem 0.75rem;
-}
+  }
 
-form button.btn,
-a.btn {
+  form button.btn,
+  a.btn {
     border-radius: 0.5rem;
-}
+  }
 
-h1.display-5 {
+  h1.display-5 {
     font-size: 1.6rem;
-}
+  }
 
-@media (max-width: 576px) {
+  @media (max-width: 576px) {
     .equipo-horizontal {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
+      flex-direction: column;
+      align-items: stretch;
+      text-align: center;
     }
 
     .equipo-horizontal .nombre {
-        white-space: normal;
+      white-space: normal;
     }
 
     .resultado-final {
-        margin: 0.5rem 0;
+      margin: 0.5rem 0;
     }
-}
+  }
 </style>
 
 <div class="alert alert-info text-center mb-4">
-    🕒 Hora del servidor: {{ now.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z') }}
+  🕒 Hora del servidor: {{ now.astimezone().strftime('%Y-%m-%d %H:%M:%S %Z') }}
 </div>
 
 <div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="display-5 fw-bold">⚽ Partidos Organizados</h1>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="display-5 fw-bold">⚽ Partidos Organizados</h1>
+  </div>
+
+  {% if current_user.is_authenticated %}
+  <div class="alert alert-primary shadow-sm text-center" role="alert">
+    Bienvenido, <strong>{{ current_user.username }}</strong>
+  </div>
+  {% endif %}
+
+  <!-- Filtros -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form id="filtroForm" class="row g-3">
+        <div class="col-md-3">
+          <input
+            type="text"
+            class="form-control"
+            id="busquedaInput"
+            placeholder="Buscar por equipo o lugar..."
+          />
+        </div>
+        <div class="col-md-3">
+          <input type="date" class="form-control" id="fechaFiltro" />
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" id="lugarFiltro">
+            <option value="">Todos los lugares</option>
+            {% set lugares_unicos = [] %} {% for datos in datos_partidos %} {%
+            if datos.partido.lugar not in lugares_unicos %} {% set _ =
+            lugares_unicos.append(datos.partido.lugar) %}
+            <option value="{{ datos.partido.lugar }}">
+              {{ datos.partido.lugar }}
+            </option>
+            {% endif %} {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" id="estadoFiltro">
+            <option value="">Todos los estados</option>
+            <option value="proximo">Próximamente</option>
+            <option value="en-curso">En curso</option>
+            <option value="terminado">Terminado</option>
+          </select>
+        </div>
+      </form>
     </div>
+  </div>
 
-    {% if current_user.is_authenticated %}
-        <div class="alert alert-primary shadow-sm text-center" role="alert">
-            Bienvenido, <strong>{{ current_user.username }}</strong>
-        </div>
-    {% endif %}
+  <!-- Tarjetas de partidos -->
+{% if datos_partidos %}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+  {% for datos in datos_partidos %}
+  {% set partido = datos.partido %}
+  {% set cancelado_por_falta = datos.cancelado_por_falta %}
+  <div
+  class="col partido-card"
+  data-equipo1="{{ partido.equipo1 | lower }}"
+  data-equipo2="{{ partido.equipo2 | lower }}"
+  data-lugar="{{ partido.lugar | lower }}"
+  data-fecha="{{ partido.fecha_hora.strftime('%Y-%m-%d') }}"
+  data-fecha-hora="{{ partido.fecha_hora.astimezone().isoformat() }}"
+  data-resultado="{{ partido.resultado }}"
+  data-cerrado="{{ 'true' if partido.cerrado else 'false' }}"
+  data-cancelado="{{ 'true' if cancelado_por_falta else 'false' }}"
+  data-porcentaje="{{ datos.porcentaje_inscritos }}"
+  data-estado="{% if cancelado_por_falta %}cancelado{% elif partido.cerrado %}terminado{% elif partido.fecha_hora <= now %}en-curso{% else %}proximo{% endif %}"
+>
+    <div class="card shadow-sm h-100 d-flex flex-column position-relative">
+  {% if cancelado_por_falta %}
+    <span class="estado-etiqueta bg-danger">
+      <i class="fas fa-times-circle"></i> Cancelado
+    </span>
+  {% elif partido.cerrado %}
+    <span class="estado-etiqueta terminado">
+      <i class="fas fa-flag-checkered"></i> Terminado
+    </span>
+  {% elif partido.fecha_hora <= now %}
+    <span class="estado-etiqueta en-curso">
+      <i class="fas fa-sync-alt"></i> En curso
+    </span>
+  {% else %}
+    <span class="estado-etiqueta proximo">
+      <i class="fas fa-hourglass-start"></i> Próximamente
+    </span>
+  {% endif %}
 
-    <!-- Filtros -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <form id="filtroForm" class="row g-3">
-                <div class="col-md-3">
-                    <input type="text" class="form-control" id="busquedaInput" placeholder="Buscar por equipo o lugar...">
-                </div>
-                <div class="col-md-3">
-                    <input type="date" class="form-control" id="fechaFiltro">
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select" id="lugarFiltro">
-                        <option value="">Todos los lugares</option>
-                        {% set lugares_unicos = [] %}
-                        {% for datos in datos_partidos %}
-                            {% if datos.partido.lugar not in lugares_unicos %}
-                                {% set _ = lugares_unicos.append(datos.partido.lugar) %}
-                                <option value="{{ datos.partido.lugar }}">{{ datos.partido.lugar }}</option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select" id="estadoFiltro">
-                        <option value="">Todos los estados</option>
-                        <option value="proximo">Próximamente</option>
-                        <option value="en-curso">En curso</option>
-                        <option value="terminado">Terminado</option>
-                    </select>
-                </div>
-            </form>
+
+      <div class="card-body p-4 d-flex flex-column">
+        <div class="flex-grow-1">
+          {% set resultado = partido.resultado %}
+            {# ✅ ALERTA DE CANCELACIÓN POR FALTA DE JUGADORES #}
+          {% if cancelado_por_falta %}
+          <div class="alert alert-danger py-2 px-3 text-center small mb-3">
+            ❌ Partido cancelado por falta de jugadores.<br />
+            Será eliminado automáticamente en unos minutos.
+          </div>
+          {% endif %}
+            {% if resultado %} {% set
+            goles = resultado.split('-') %} {% set goles_equipo1 = goles[0]|int
+            %} {% set goles_equipo2 = goles[1]|int %} {% set equipo_ganador =
+            None %} {% if goles_equipo1 > goles_equipo2 %} {% set equipo_ganador
+            = partido.equipo1 %} {% set color_ganador = 'equipo1-color' %} {%
+            elif goles_equipo2 > goles_equipo1 %} {% set equipo_ganador =
+            partido.equipo2 %} {% set color_ganador = 'equipo2-color' %} {%
+            endif %}
+
+            <div class="equipo-horizontal mb-3">
+              <div class="nombre equipo1-color">
+                <i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}
+              </div>
+              <div class="resultado-final">
+                {{ goles_equipo1 }} - {{ goles_equipo2 }}
+              </div>
+              <div class="nombre equipo2-color">
+                <i class="fas fa-shield-heart me-2"></i>{{ partido.equipo2 }}
+              </div>
+            </div>
+
+            {% if equipo_ganador %}
+            <div class="text-center mb-3">
+              <div class="ganador-icono mb-1">🏆</div>
+              <div class="ganador-destacado {{ color_ganador }}">
+                {{ equipo_ganador }}
+              </div>
+              <span class="badge bg-success fs-6 mt-1">Ganador</span>
+            </div>
+            {% else %}
+            <div class="text-center mb-3">
+              <h5 class="text-warning fw-bold mb-1">🤝 Empate</h5>
+              <span class="badge bg-warning text-dark">Sin ganador</span>
+            </div>
+            {% endif %} {% if datos.user_inscrito and datos.puede_calificar %}
+            <div class="alert alert-info py-2 px-3 text-center small mb-3">
+              📋 Partido terminado. Puedes calificar a tus compañeros.
+              <a
+                href="{{ url_for('detalle_partido', partido_id=partido.id) }}"
+                class="btn btn-sm btn-success mt-1"
+                >Calificar</a
+              >
+            </div>
+            {% elif datos.user_inscrito %}
+            <div class="alert alert-success py-2 px-3 text-center small mb-3">
+              ✅ Ya calificaste a todos los compañeros.
+            </div>
+            {% else %}
+            <div class="alert alert-secondary py-2 px-3 text-center small mb-3">
+              ✅ Partido finalizado.
+            </div>
+            {% endif %} {% else %}
+            <div class="equipo-horizontal mb-3">
+              <div class="nombre equipo1-color">
+                <i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}
+              </div>
+              <div class="resultado-final">vs</div>
+              <div class="nombre equipo2-color">
+                <i class="fas fa-shield-heart me-2"></i>{{ partido.equipo2 }}
+              </div>
+            </div>
+
+            {% if current_user.id == partido.organizador_id and not cancelado_por_falta %}
+  <div class="alert alert-warning py-2 px-3 text-center small mb-3">
+    ⏳ Tienes hasta
+    <strong>{{ partido.tiempo_limite().strftime('%d/%m/%Y %H:%M') }}</strong>
+    para cerrar con resultado.
+  </div>
+            {% elif partido.fecha_hora > now %}
+            <div class="alert alert-warning py-2 px-3 text-center small mb-3">
+              🧩 Se están armando los equipos.
+            </div>
+            {% elif partido.fecha_hora <= now and not partido.cerrado and not cancelado_por_falta %}
+  <div class="alert alert-primary py-2 px-3 text-center small mb-3">
+    ⚽ El partido ya se está jugando.
+  </div>
+            {% endif %} {% endif %}
+
+            <p class="text-muted mb-1 small text-center">
+              <i class="fa-regular fa-calendar-days me-1"></i>{{
+              partido.fecha_hora.strftime('%d/%m/%Y') }}
+              <i class="fa-regular fa-clock ms-2 me-1"></i>{{
+              partido.fecha_hora.strftime('%H:%M') }}
+            </p>
+            <p class="text-center small text-muted mb-2">
+              <i class="fas fa-map-marker-alt text-primary me-1"></i
+              ><strong>Lugar:</strong> {{ partido.lugar }}
+            </p>
+
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="equipo1-color d-flex align-items-center">
+                  <i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}
+                </span>
+                <span class="d-flex align-items-center">
+                  <i class="fas fa-user me-1 text-muted"></i>{{
+                  datos.count_equipo1 }}/{{ partido.max_jugadores }} {% if
+                  datos.count_equipo1 >= partido.max_jugadores %}
+                  <span class="badge bg-danger ms-2">Cupo lleno</span>
+                  {% endif %}
+                </span>
+              </div>
+              <div
+                class="d-flex justify-content-between align-items-center mt-1"
+              >
+                <span class="equipo2-color d-flex align-items-center">
+                  <i class="fas fa-shield-heart me-2"></i>{{ partido.equipo2 }}
+                </span>
+                <span class="d-flex align-items-center">
+                  <i class="fas fa-user me-1 text-muted"></i>{{
+                  datos.count_equipo2 }}/{{ partido.max_jugadores }} {% if
+                  datos.count_equipo2 >= partido.max_jugadores %}
+                  <span class="badge bg-danger ms-2">Cupo lleno</span>
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Acciones -->
+          {% if current_user.is_authenticated %} {% set equipo1_lleno =
+          datos.count_equipo1 >= partido.max_jugadores %} {% set equipo2_lleno =
+          datos.count_equipo2 >= partido.max_jugadores %} {% set equipos_llenos
+          = equipo1_lleno and equipo2_lleno %} {% set partido_en_curso =
+          partido.fecha_hora <= now %} {% if not partido.cerrado and not
+          partido.resultado and not partido.invitacion and not equipos_llenos
+          and not datos.user_inscrito and not partido_en_curso %}
+          <form
+            action="{{ url_for('unirse_partido', partido_id=partido.id) }}"
+            method="POST"
+          >
+            <button type="submit" class="btn btn-primary btn-sm w-100 mb-2">
+              🙋 Unirse al partido
+            </button>
+          </form>
+          {% endif %} {% endif %}
+          <div class="mt-auto pt-2">
+            <div class="d-grid mb-2">
+              <a
+                href="{{ url_for('detalle_partido', partido_id=partido.id) }}"
+                class="btn btn-outline-primary btn-sm w-100"
+              >
+                🔍 Ver detalle
+              </a>
+            </div>
+
+            {% if current_user.is_authenticated %} {% if current_user.id ==
+            partido.organizador_id %}
+            <div class="d-flex flex-column gap-2">
+              {# Botón EDITAR: solo si NO ha comenzado y NO está cerrado #} {%
+              if not partido.cerrado and partido.fecha_hora > now %}
+              <a
+                href="{{ url_for('editar_partido', partido_id=partido.id) }}"
+                class="btn btn-outline-secondary btn-sm w-100"
+                >✏️ Editar</a
+              >
+              {% endif %} {# Botón ELIMINAR: siempre que no esté cerrado #} {%
+              if not partido.cerrado %}
+              <form
+                action="{{ url_for('eliminar_partido', partido_id=partido.id) }}"
+                method="POST"
+                onsubmit="return confirm('¿Eliminar este partido?');"
+              >
+                <button
+                  class="btn btn-outline-danger btn-sm w-100"
+                  type="submit"
+                >
+                  🗑️ Eliminar
+                </button>
+              </form>
+              {% endif %} {# Botón REGISTRAR RESULTADO: si no expiró y no está
+              cerrado #} {% set partido_empezado_hace_2_horas = (now -
+              partido.fecha_hora).total_seconds() >= 7200 %} {% if not
+              partido.esta_expirado() and not partido.cerrado and
+              partido_empezado_hace_2_horas %}
+              <a
+                href="{{ url_for('registrar_resultado', partido_id=partido.id) }}"
+                class="btn btn-outline-success btn-sm w-100"
+                >📝 Registrar resultado</a
+              >
+              {% endif %}
+            </div>
+            {% endif %} {% endif %} {% if current_user.id ==
+            partido.organizador_id and partido.cerrado and partido.resultado %}
+            <a
+              href="{{ url_for('editar_resultado', partido_id=partido.id) }}"
+              class="btn btn-outline-warning btn-sm w-100 mt-2"
+            >
+              ✏️ Editar resultado
+            </a>
+            {% endif %}
+          </div>
         </div>
+      </div>
     </div>
-
-    <!-- Tarjetas de partidos -->
-    {% if datos_partidos %}
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-            {% for datos in datos_partidos %}
-                {% set partido = datos.partido %}
-                <div class="col partido-card"
-     data-equipo1="{{ partido.equipo1 | lower }}"
-     data-equipo2="{{ partido.equipo2 | lower }}"
-     data-lugar="{{ partido.lugar | lower }}"
-     data-fecha="{{ partido.fecha_hora.strftime('%Y-%m-%d') }}"
-     data-fecha-hora="{{ partido.fecha_hora.astimezone().isoformat() }}"
-     data-resultado="{{ partido.resultado }}"
-     data-cerrado="{{ 'true' if partido.cerrado else 'false' }}"
-     data-estado="{% if partido.cerrado %}terminado{% elif partido.fecha_hora <= now %}en-curso{% else %}proximo{% endif %}">
-
-                    <div class="card shadow-sm h-100 d-flex flex-column position-relative">
-                        {% if partido.cerrado %}
-                            <span class="estado-etiqueta terminado"><i class="fas fa-flag-checkered"></i> Terminado</span>
-                        {% elif partido.fecha_hora <= now %}
-                            <span class="estado-etiqueta en-curso"><i class="fas fa-sync-alt"></i> En curso</span>
-                        {% else %}
-                            <span class="estado-etiqueta proximo"><i class="fas fa-hourglass-start"></i> Próximamente</span>
-                        {% endif %}
-
-                        <div class="card-body p-4 d-flex flex-column">
-                            <div class="flex-grow-1">
-                                {% set resultado = partido.resultado %}
-                                {% if resultado %}
-                                    {% set goles = resultado.split('-') %}
-                                    {% set goles_equipo1 = goles[0]|int %}
-                                    {% set goles_equipo2 = goles[1]|int %}
-                                    {% set equipo_ganador = None %}
-                                    {% if goles_equipo1 > goles_equipo2 %}
-                                        {% set equipo_ganador = partido.equipo1 %}
-                                        {% set color_ganador = 'equipo1-color' %}
-                                    {% elif goles_equipo2 > goles_equipo1 %}
-                                        {% set equipo_ganador = partido.equipo2 %}
-                                        {% set color_ganador = 'equipo2-color' %}
-                                    {% endif %}
-
-                                    <div class="equipo-horizontal mb-3">
-                                        <div class="nombre equipo1-color"><i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}</div>
-                                        <div class="resultado-final">{{ goles_equipo1 }} - {{ goles_equipo2 }}</div>
-                                        <div class="nombre equipo2-color"><i class="fas fa-shield-heart me-2"></i>{{ partido.equipo2 }}</div>
-                                    </div>
-
-                                    {% if equipo_ganador %}
-                                        <div class="text-center mb-3">
-                                            <div class="ganador-icono mb-1">🏆</div>
-                                            <div class="ganador-destacado {{ color_ganador }}">{{ equipo_ganador }}</div>
-                                            <span class="badge bg-success fs-6 mt-1">Ganador</span>
-                                        </div>
-                                    {% else %}
-                                        <div class="text-center mb-3">
-                                            <h5 class="text-warning fw-bold mb-1">🤝 Empate</h5>
-                                            <span class="badge bg-warning text-dark">Sin ganador</span>
-                                        </div>
-                                    {% endif %}
-
-                                    <p class="text-muted mb-1 small text-center">
-                                        <i class="fa-regular fa-calendar-days me-1"></i>{{ partido.fecha_hora.strftime('%d/%m/%Y') }}
-                                        <i class="fa-regular fa-clock ms-2 me-1"></i>{{ partido.fecha_hora.strftime('%H:%M') }}
-                                    </p>
-                                    <p class="text-center small text-muted mb-2">
-                                        <i class="fas fa-map-marker-alt text-primary me-1"></i><strong>Lugar:</strong> {{ partido.lugar }}
-                                    </p>
-
-                                    <div class="alert alert-dark py-2 px-3 small mb-2 text-center">
-                                        <i class="fas fa-lock me-1"></i>Este partido ya fue cerrado.
-                                    </div>
-                                {% else %}
-                                    <div class="equipo-horizontal mb-3">
-                                        <div class="nombre equipo1-color"><i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}</div>
-                                        <div class="resultado-final">vs</div>
-                                        <div class="nombre equipo2-color"><i class="fas fa-shield-heart me-2"></i>{{ partido.equipo2 }}</div>
-                                    </div>
-
-                                    <div class="alert alert-warning py-2 px-3 text-center small mb-3">
-                                        ⏳ Tienes hasta <strong>{{ partido.tiempo_limite().strftime('%d/%m/%Y %H:%M') }}</strong> para cerrar con resultado.
-                                    </div>
-
-                                    <p class="text-muted mb-1 small text-center">
-                                        <i class="fa-regular fa-calendar-days me-1"></i>{{ partido.fecha_hora.strftime('%d/%m/%Y') }}
-                                        <i class="fa-regular fa-clock ms-2 me-1"></i>{{ partido.fecha_hora.strftime('%H:%M') }}
-                                    </p>
-                                    <p class="text-center small text-muted mb-2">
-                                        <i class="fas fa-map-marker-alt text-primary me-1"></i><strong>Lugar:</strong> {{ partido.lugar }}
-                                    </p>
-
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-    <span class="equipo1-color d-flex align-items-center">
-        <i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}
-    </span>
-    <span class="d-flex align-items-center">
-        <i class="fas fa-user me-1 text-muted"></i>{{ datos.count_equipo1 }}/{{ partido.max_jugadores }}
-        {% if datos.count_equipo1 >= partido.max_jugadores %}
-            <span class="badge bg-danger ms-2">Cupo lleno</span>
-        {% endif %}
-    </span>
-</div>
-                                        <div class="d-flex justify-content-between align-items-center mt-1">
-                                             <span class="equipo2-color d-flex align-items-center">
-        <i class="fas fa-shield-alt me-2"></i>{{ partido.equipo2 }}
-    </span>
-    <span class="d-flex align-items-center">
-        <i class="fas fa-user me-1 text-muted"></i>{{ datos.count_equipo2 }}/{{ partido.max_jugadores }}
-        {% if datos.count_equipo2 >= partido.max_jugadores %}
-            <span class="badge bg-danger ms-2">Cupo lleno</span>
-        {% endif %}
-    </span>
-</div>
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            
-                            <!-- Acciones -->
-{% if current_user.is_authenticated %}
-    {% set equipo1_lleno = datos.count_equipo1 >= partido.max_jugadores %}
-    {% set equipo2_lleno = datos.count_equipo2 >= partido.max_jugadores %}
-    {% set equipos_llenos = equipo1_lleno and equipo2_lleno %}
-
-    {% if not partido.cerrado and not partido.resultado and not partido.invitacion and not equipos_llenos and not datos.user_inscrito %}
-    <form action="{{ url_for('unirse_partido', partido_id=partido.id) }}" method="POST">
-        <button type="submit" class="btn btn-primary btn-sm w-100 mb-2">
-            🙋 Unirse al partido
-        </button>
-    </form>
-{% endif %}
-{% endif %}
-                            <div class="mt-auto pt-2">
-                                <div class="d-grid mb-2">
-                                    <a href="{{ url_for('detalle_partido', partido_id=partido.id) }}" class="btn btn-outline-primary btn-sm w-100">
-                                        🔍 Ver detalle
-                                    </a>
-                                    
-                                    
-                                </div>
-
-                                {% if current_user.is_authenticated %}
-                                    {% if current_user.id == partido.organizador_id and not partido.cerrado %}
-                                        <div class="d-flex flex-column gap-2">
-                                            <a href="{{ url_for('editar_partido', partido_id=partido.id) }}" class="btn btn-outline-secondary btn-sm w-100">✏️ Editar</a>
-                                            <form action="{{ url_for('eliminar_partido', partido_id=partido.id) }}" method="POST" onsubmit="return confirm('¿Eliminar este partido?');">
-                                                <button class="btn btn-outline-danger btn-sm w-100" type="submit">🗑️ Eliminar</button>
-                                            </form>
-                                            {% if not partido.esta_expirado() %}
-                                                <a href="{{ url_for('registrar_resultado', partido_id=partido.id) }}" class="btn btn-outline-success btn-sm w-100">📝 Registrar resultado</a>
-                                            {% endif %}
-                                        </div>
-                                    {% endif %}
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="alert alert-info text-center mt-4">
-            No hay partidos organizados aún.
-        </div>
-    {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info text-center mt-4">
+    No hay partidos organizados aún.
+  </div>
+  {% endif %}
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('busquedaInput');
-    const fechaFiltro = document.getElementById('fechaFiltro');
-    const lugarFiltro = document.getElementById('lugarFiltro');
-    const estadoFiltro = document.getElementById('estadoFiltro');
-    const cards = document.querySelectorAll('.partido-card');
+  document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("busquedaInput");
+    const fechaFiltro = document.getElementById("fechaFiltro");
+    const lugarFiltro = document.getElementById("lugarFiltro");
+    const estadoFiltro = document.getElementById("estadoFiltro");
+    const cards = document.querySelectorAll(".partido-card");
 
     function filtrarPartidos() {
-        const texto = searchInput.value.toLowerCase();
-        const fecha = fechaFiltro.value;
-        const lugar = lugarFiltro.value.toLowerCase();
-        const estado = estadoFiltro.value;
+      const texto = searchInput.value.toLowerCase();
+      const fecha = fechaFiltro.value;
+      const lugar = lugarFiltro.value.toLowerCase();
+      const estado = estadoFiltro.value;
 
-        cards.forEach(card => {
-            const equipo1 = card.dataset.equipo1;
-            const equipo2 = card.dataset.equipo2;
-            const cardLugar = card.dataset.lugar;
-            const cardFecha = card.dataset.fecha;
-            const cardEstado = card.dataset.estado;
+      cards.forEach((card) => {
+        const equipo1 = card.dataset.equipo1;
+        const equipo2 = card.dataset.equipo2;
+        const cardLugar = card.dataset.lugar;
+        const cardFecha = card.dataset.fecha;
+        const cardEstado = card.dataset.estado;
 
-            const coincideBusqueda = equipo1.includes(texto) || equipo2.includes(texto) || cardLugar.includes(texto);
-            const coincideFecha = !fecha || cardFecha === fecha;
-            const coincideLugar = !lugar || cardLugar === lugar;
-            const coincideEstado = !estado || cardEstado === estado;
+        const coincideBusqueda =
+          equipo1.includes(texto) ||
+          equipo2.includes(texto) ||
+          cardLugar.includes(texto);
+        const coincideFecha = !fecha || cardFecha === fecha;
+        const coincideLugar = !lugar || cardLugar === lugar;
+        const coincideEstado = !estado || cardEstado === estado;
 
-            card.style.display = (coincideBusqueda && coincideFecha && coincideLugar && coincideEstado) ? 'block' : 'none';
-        });
+        card.style.display =
+          coincideBusqueda && coincideFecha && coincideLugar && coincideEstado
+            ? "block"
+            : "none";
+      });
     }
 
-    searchInput.addEventListener('input', filtrarPartidos);
-    fechaFiltro.addEventListener('change', filtrarPartidos);
-    lugarFiltro.addEventListener('change', filtrarPartidos);
-    estadoFiltro.addEventListener('change', filtrarPartidos);
-});
+    searchInput.addEventListener("input", filtrarPartidos);
+    fechaFiltro.addEventListener("change", filtrarPartidos);
+    lugarFiltro.addEventListener("change", filtrarPartidos);
+    estadoFiltro.addEventListener("change", filtrarPartidos);
+  });
 
-document.addEventListener('DOMContentLoaded', () => {
-    const updateEstados = () => {
-        const cards = document.querySelectorAll('.partido-card');
+  document.addEventListener("DOMContentLoaded", () => {
+  const updateEstados = () => {
+    const cards = document.querySelectorAll(".partido-card");
 
-        cards.forEach(card => {
-            const estadoEtiqueta = card.querySelector('.estado-etiqueta');
-            const fechaStr = card.dataset.fechaHora;
-            const resultado = card.dataset.resultado;
-            const cerrado = card.dataset.cerrado === "true";
-            console.log("Fecha partida:", fechaStr, "| Interpretado:", new Date(fechaStr), "| Ahora:", new Date());
+    cards.forEach((card) => {
+      const estadoEtiqueta = card.querySelector(".estado-etiqueta");
+      const fechaStr = card.dataset.fechaHora;
+      const cerrado = card.dataset.cerrado === "true";
+      const cancelado = card.dataset.cancelado === "true";
+      const porcentaje = parseFloat(card.dataset.porcentaje || "0");
 
-            if (!fechaStr || !estadoEtiqueta) return;
+      if (!fechaStr || !estadoEtiqueta) return;
 
-            // Convertir la fecha a zona local manualmente
-            const fechaPartido = new Date(fechaStr);
-            
+      const resultado = card.dataset.resultado?.trim();
+      const tieneResultado = resultado && resultado !== "" && resultado !== "null";
 
-            const ahora = new Date();
-            const diffHoras = (ahora - fechaLocal) / (1000 * 60 * 60);
+      const fechaPartido = new Date(fechaStr);
+      const ahora = new Date();
+      const diffMin = (ahora - fechaPartido) / (1000 * 60);
 
-            let nuevoEstado = '';
-            let claseNueva = '';
+      let nuevoEstado = "";
+      let claseNueva = "";
 
-            if (cerrado || resultado) {
-                nuevoEstado = 'Terminado';
-                claseNueva = 'terminado';
-            } else if (diffHoras >= 2) {
-                nuevoEstado = 'Terminado pendiente de resultado';
-                claseNueva = 'terminado';
-            } else if (diffHoras >= 0) {
-                nuevoEstado = 'En curso';
-                claseNueva = 'en-curso';
-            } else {
-                nuevoEstado = 'Próximamente';
-                claseNueva = 'proximo';
-            }
+      if (cancelado) {
+        nuevoEstado = "Cancelado";
+        claseNueva = "bg-danger";
+      } else if (cerrado && tieneResultado) {
+        nuevoEstado = "Terminado";
+        claseNueva = "terminado";
+      } else if (diffMin >= 0 && porcentaje >= 0.7) {
+        nuevoEstado = "En curso";
+        claseNueva = "en-curso";
+      } else {
+        nuevoEstado = "Próximamente";
+        claseNueva = "proximo";
+      }
 
-            estadoEtiqueta.textContent = nuevoEstado;
-            estadoEtiqueta.className = 'estado-etiqueta ' + claseNueva;
+      estadoEtiqueta.textContent = nuevoEstado;
+      estadoEtiqueta.className = "estado-etiqueta " + claseNueva;
+      card.dataset.estado = claseNueva;
+    });
+  };
 
-            card.dataset.estado = claseNueva;
-        });
-    };
-
-    updateEstados();
-    setInterval(updateEstados, 60000);
+  updateEstados();
+  setInterval(updateEstados, 60000); // cada minuto
 });
 </script>
 
-
 {% endblock %}
+
+
