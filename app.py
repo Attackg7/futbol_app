@@ -15,7 +15,8 @@ now = datetime.now()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'clave_supersecreta'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///futbol.db'
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'futbol.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Inicializar extensiones
