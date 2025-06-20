@@ -17,9 +17,14 @@
                 </div>
             </div>
 
-            <div class="mb-3">
-                <label for="lugar" class="form-label">Lugar</label>
-                <input type="text" id="lugar" name="lugar" class="form-control" required>
+            <!-- CAMPO LUGAR CON AUTOCOMPLETADO Y MAPA -->
+            <div class="mb-4">
+                <label for="lugar" class="form-label">Buscar dirección</label>
+                <input id="lugar" name="lugar" type="text" class="form-control form-control-lg shadow-sm" placeholder="Ej: El Campin, Bogota" required>
+                <input type="hidden" id="latitud" name="latitud">
+                <input type="hidden" id="longitud" name="longitud">
+                <div id="mapa-previa" class="mt-3 rounded shadow-sm" style="height: 300px;"></div>
+                <div class="form-text text-danger d-none" id="error-lugar">Debes seleccionar una ubicación válida del mapa.</div>
             </div>
 
             <div class="row mb-3">
@@ -71,4 +76,77 @@
         </form>
     </div>
 </div>
+
+<!-- GOOGLE MAPS API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqmMoyKGBgYjkpk_kf3fBrgZbtXRGRm9o&libraries=places"></script>
+
+<!-- LÓGICA DEL AUTOCOMPLETADO Y MAPA -->
+<script>
+    let lugarValido = false;
+    let map, marker;
+
+    function initAutocomplete() {
+        const input = document.getElementById('lugar');
+        const autocomplete = new google.maps.places.Autocomplete(input, {
+  types: ['establishment'], // lugares como canchas, estadios, parques
+  componentRestrictions: { country: 'co' }
+        });
+
+        const mapaContenedor = document.getElementById('mapa-previa');
+        const centroInicial = { lat: 4.7110, lng: -74.0721 }; // Bogotá
+
+        map = new google.maps.Map(mapaContenedor, {
+            center: centroInicial,
+            zoom: 12,
+            disableDefaultUI: true,
+        });
+
+        marker = new google.maps.Marker({
+            map: map,
+            draggable: false,
+        });
+
+        autocomplete.addListener('place_changed', function () {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) {
+                lugarValido = false;
+                document.getElementById('error-lugar').classList.remove('d-none');
+                return;
+            }
+
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+
+            document.getElementById('latitud').value = lat;
+            document.getElementById('longitud').value = lng;
+            lugarValido = true;
+            document.getElementById('error-lugar').classList.add('d-none');
+
+            map.setCenter({ lat, lng });
+            map.setZoom(16);
+            marker.setPosition({ lat, lng });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Restringe fechas anteriores
+        const inputFecha = document.getElementById('fecha');
+        const today = new Date();
+        const localDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const formatted = localDate.toISOString().split('T')[0];
+        inputFecha.setAttribute('min', formatted);
+
+        initAutocomplete();
+
+        // Validación del formulario
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function (e) {
+            if (!lugarValido) {
+                e.preventDefault();
+                document.getElementById('error-lugar').classList.remove('d-none');
+                document.getElementById('lugar').focus();
+            }
+        });
+    });
+</script>
 {% endblock %}

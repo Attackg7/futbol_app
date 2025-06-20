@@ -226,32 +226,38 @@
     </div>
 
     <!-- Partidos participados -->
-    <div class="mb-4">
-        <h4>Partidos en los que ha participado</h4>
-        {% if inscripciones %}
-            <ul class="list-group">
-                {% for inscripcion in inscripciones %}
-                <li class="list-group-item">
-                    <strong>{{ inscripcion.partido.equipo1 }} vs {{ inscripcion.partido.equipo2 }}</strong><br>
-                    Fecha: {{ inscripcion.partido.fecha_hora.strftime('%d/%m/%Y') }}<br>
-                    Lugar: {{ inscripcion.partido.lugar }}<br>
-                    Resultado:
-                    {% if inscripcion.partido.resultado %}
-                        {{ inscripcion.partido.resultado }}
-                    {% elif inscripcion.partido.cerrado %}
-                        Partido cerrado sin resultado
-                    {% else %}
-                        Aún no registrado
-                    {% endif %}<br>
-                    Equipo: {{ inscripcion.equipo }}<br>
-                    <a href="{{ url_for('detalle_partido', partido_id=inscripcion.partido.id) }}" class="btn btn-link btn-sm">Ver detalles</a>
-                </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-muted">No has participado en ningún partido aún.</p>
-        {% endif %}
-    </div>
+<div class="mb-4">
+    <h4>Partidos en los que ha participado</h4>
+    {% set participaciones_validas = [] %}
+{% for inscripcion in inscripciones %}
+    {% if inscripcion.partido and inscripcion.partido.cerrado %}
+        {% set _ = participaciones_validas.append(inscripcion) %}
+    {% endif %}
+{% endfor %}
+    {% if participaciones_validas %}
+        <ul class="list-group">
+            {% for inscripcion in inscripciones if inscripcion.partido.cerrado or inscripcion.partido.resultado %}
+            <li class="list-group-item">
+                <strong>{{ inscripcion.partido.equipo1 }} vs {{ inscripcion.partido.equipo2 }}</strong><br>
+                Fecha: {{ inscripcion.partido.fecha_hora.strftime('%d/%m/%Y') }}<br>
+                Lugar: {{ inscripcion.partido.lugar }}<br>
+                Resultado:
+                {% if inscripcion.partido.resultado %}
+                    {{ inscripcion.partido.resultado }}
+                {% elif inscripcion.partido.cerrado %}
+                    Partido cerrado sin resultado
+                {% else %}
+                    Aún no registrado
+                {% endif %}<br>
+                Equipo: {{ inscripcion.equipo }}<br>
+                <a href="{{ url_for('detalle_partido', partido_id=inscripcion.partido.id) }}" class="btn btn-link btn-sm">Ver detalles</a>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">No has participado en ningún partido válido aún.</p>
+    {% endif %}
+</div>
 
     <div class="text-center">
         <a href="{{ url_for('index') }}" class="btn btn-outline-primary">Volver al inicio</a>

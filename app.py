@@ -8,6 +8,8 @@ from werkzeug.utils import secure_filename
 import uuid
 from datetime import datetime, timezone
 from models import Notificacion
+from flask_migrate import Migrate
+
 
 now = datetime.now()
 
@@ -21,6 +23,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Inicializar extensiones
 db.init_app(app)
+migrate = Migrate(app, db)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -87,17 +90,44 @@ def index():
         count_total = len(inscripciones)
         total_requerido = partido.max_jugadores * 2
         porcentaje_actual = count_total / total_requerido if total_requerido > 0 else 0
-        cancelado_por_falta = False
 
-        if not partido.cerrado and partido.fecha_hora <= now and porcentaje_actual < 0.7:
-            tiempo_desde_inicio = (now - partido.fecha_hora).total_seconds()
-            if tiempo_desde_inicio >= 600:
+        tiempo_desde_inicio = (now - partido.fecha_hora).total_seconds()
+        ha_empezado = partido.fecha_hora <= now
+        ha_pasado_10_min = tiempo_desde_inicio >= 600
+        ha_pasado_2_horas = tiempo_desde_inicio >= 7200
+        ha_pasado_24_horas = tiempo_desde_inicio >= 86400
+
+        cancelado_por_falta = False
+        es_organizador = current_user.is_authenticated and current_user.id == partido.organizador_id
+
+        # 1. CANCELADO POR FALTA (<70%) Y ELIMINACIÓN A LOS 10 MIN
+        if not partido.cerrado and ha_empezado and porcentaje_actual < 0.7:
+            cancelado_por_falta = True
+            if ha_pasado_10_min:
                 db.session.delete(partido)
                 db.session.commit()
-                continue
-            else:
-                cancelado_por_falta = True
+                continue  # partido eliminado, no mostrar
 
+        # 2. ELIMINACIÓN POR NO TENER RESULTADO A LAS 24 HORAS
+        if not partido.cerrado and ha_empezado and partido.resultado is None and ha_pasado_24_horas:
+            # Eliminar también inscripciones (para que no aparezca en historial)
+            for inscripcion in partido.inscripciones:
+                db.session.delete(inscripcion)
+            db.session.delete(partido)
+            db.session.commit()
+            continue  # partido eliminado, no mostrar
+
+        # Mostrar botón de resultado 2 horas después
+        puede_registrar_resultado = (
+            current_user.is_authenticated and
+            current_user.id == partido.organizador_id and
+            not partido.cerrado and
+            partido.resultado is None and
+            ha_pasado_2_horas and
+            porcentaje_actual >= 0.7
+        )
+
+        # Conteo por equipos
         count_equipo1 = sum(1 for i in inscripciones if i.equipo == partido.equipo1)
         count_equipo2 = sum(1 for i in inscripciones if i.equipo == partido.equipo2)
         equipo1_lleno = count_equipo1 >= partido.max_jugadores
@@ -126,18 +156,19 @@ def index():
             'user_inscrito': user_inscrito,
             'puede_calificar': puede_calificar,
             'cancelado_por_falta': cancelado_por_falta,
-            'porcentaje_inscritos': porcentaje_actual
+            'porcentaje_inscritos': porcentaje_actual,
+            'puede_registrar_resultado': puede_registrar_resultado
         })
 
-    # ORDENAR
+    # Clasificar
     proximos = []
     en_curso = []
     terminados = []
 
     for datos in datos_partidos:
         partido = datos['partido']
-        cancelado = datos.get('cancelado_por_falta', False)
-        porcentaje = datos.get('porcentaje_inscritos', 0)
+        cancelado = datos['cancelado_por_falta']
+        porcentaje = datos['porcentaje_inscritos']
         ya_empezo = partido.fecha_hora <= now
 
         if cancelado:
@@ -152,6 +183,7 @@ def index():
     datos_partidos = proximos + en_curso + terminados
 
     return render_template('index.html', datos_partidos=datos_partidos, now=now)
+
 
 
 
@@ -181,6 +213,8 @@ def crear_partido():
         nuevo_partido = Partido(
             fecha_hora=fecha_hora,
             lugar=request.form['lugar'],
+            latitud=float(request.form['latitud']) if request.form['latitud'] else None,
+            longitud=float(request.form['longitud']) if request.form['longitud'] else None,
             equipo1=request.form['equipo1'],
             equipo2=request.form['equipo2'],
             max_jugadores=int(request.form['max_jugadores']),
@@ -293,6 +327,7 @@ def detalle_partido(partido_id):
             User.username.ilike(f"%{buscar_query}%"),
             User.id != current_user.id
         ).all()
+         
 
     return render_template(
         'detalle_partido.html',
@@ -303,7 +338,11 @@ def detalle_partido(partido_id):
         amigos=amigos,
         invitados_ids=invitados_ids,
         usuarios_buscados=usuarios_buscados
+
+        
     )
+        
+
 @app.route('/buscar_usuarios_ajax')
 @login_required
 def buscar_usuarios_ajax():
@@ -488,7 +527,12 @@ from sqlalchemy import func
 def perfil_usuario(user_id):
     usuario = User.query.get_or_404(user_id)
     calificaciones = list(usuario.calificaciones_recibidas)
-    inscripciones = list(usuario.inscripciones)
+
+    # ✅ Filtrar inscripciones a partidos válidos (no fallidos)
+    inscripciones = [
+        ins for ins in usuario.inscripciones
+        if ins.partido and ins.partido.resultado is not None and not ins.partido.cancelado
+    ]
 
     # Mostrar solicitudes solo si es el propio usuario
     solicitudes = Amistad.query.filter_by(amigo_id=usuario.id, confirmada=False).all() if current_user.id == user_id else []

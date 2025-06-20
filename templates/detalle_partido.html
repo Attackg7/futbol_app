@@ -61,24 +61,29 @@
 <div class="container py-4">
 
     <!-- Info del Partido -->
-    <div class="card">
-        <div class="card-body">
-            <h2 class="card-title text-center">
-    <span class="text-warning">
-        <i class="fas fa-shield-alt me-1"></i>{{ partido.equipo1 }}
-    </span>
-    <span class="mx-2 text-warning">vs</span>
-    <span class="text-success">
-        {{ partido.equipo2 }} <i class="fas fa-shield-heart ms-1"></i>
-    </span>
-</h2>
-            <p><i class="fa-regular fa-calendar-days me-1"></i><strong>Fecha:</strong> {{ partido.fecha_hora.strftime('%d/%m/%Y') }}</p>
-            <p><i class="fa-regular fa-clock me-1"></i><strong>Hora:</strong> {{ partido.fecha_hora.strftime('%H:%M') }}</p>
-            <p><i class="fa-solid fa-location-dot me-1"></i><strong>Lugar:</strong> {{ partido.lugar }}</p>
-            <p><i class="fa-solid fa-user-tie me-1"></i><strong>Organizador:</strong> {{ partido.organizador.username }}</p>
-            <p><i class="fa-solid fa-users-line me-1"></i><strong>Máximo por equipo:</strong> {{ partido.max_jugadores }}</p>
+<div class="card">
+    <div class="card-body">
+        <h2 class="card-title text-center mb-4">
+            <span class="text-warning">
+                <i class="fas fa-shield-alt me-1"></i>{{ partido.equipo1 }}
+            </span>
+            <span class="mx-2 text-warning">vs</span>
+            <span class="text-success">
+                {{ partido.equipo2 }} <i class="fas fa-shield-heart ms-1"></i>
+            </span>
+        </h2>
 
-{% if partido.cerrado %}
+        <div class="row align-items-start">
+            <!-- Columna izquierda: detalles -->
+            <div class="col-md-6">
+                <ul class="list-unstyled lh-lg">
+    <li><i class="fa-regular fa-calendar-days me-2 text-success"></i><strong>Fecha:</strong> {{ partido.fecha_hora.strftime('%d/%m/%Y') }}</li>
+    <li><i class="fa-regular fa-clock me-2 text-warning"></i><strong>Hora:</strong> {{ partido.fecha_hora.strftime('%H:%M') }}</li>
+    <li><i class="fa-solid fa-location-dot me-2 text-success"></i><strong>Dirección:</strong> {{ partido.lugar }}</li>
+    <li><i class="fa-solid fa-user me-2 text-warning"></i><strong>Organizador:</strong> {{ partido.organizador.username }}</li>
+    <li><i class="fa-solid fa-users me-2 text-success"></i><strong>Máximo por equipo:</strong> {{ partido.max_jugadores }}</li>
+</ul>
+             {% if partido.cerrado %}
 <div class="alert alert-success text-center py-4" role="alert">
     <div class="row align-items-center justify-content-center">
         <div class="col-md-5">
@@ -141,10 +146,24 @@
         <span class="text-muted">No disponible</span>
     {% endif %}
 </p>
-{% endif %}
+{% endif %}   
+            </div>
 
+            <!-- Columna derecha: mapa -->
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+    <div class="card-header bg-white fw-bold text-secondary">
+        <i class="fas fa-map-marker-alt me-1 text-danger"></i> Ubicación en el mapa
+    </div>
+    <div id="mapa-ubicacion" class="rounded-bottom" style="height: 250px;"></div>
 
-
+                <a id="btn-como-llegar" class="btn btn-outline-primary btn-sm mt-2" target="_blank">
+                    <i class="fas fa-location-arrow me-1"></i> Cómo llegar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 
 
             {% if current_user.id == partido.organizador_id and not partido.cerrado and not partido.esta_expirado() %}
@@ -223,37 +242,46 @@
                             {% if jugadores %}
                                 {% for inscripcion in jugadores %}
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <a href="{{ url_for('perfil_usuario', user_id=inscripcion.user.id) }}">
-                                                {{ inscripcion.user.username }}
-                                            </a>
-                                            <small class="text-muted">
-                                                {% set promedio = calificacion_jugador_en_partido(inscripcion.user, partido.id) %}
-                                                {% if promedio %}
-                                                    - Promedio: {{ promedio }}/10
-                                                {% else %}
-                                                    - Sin calificaciones
-                                                {% endif %}
-                                            </small>
-                                        </div>
-                                        <div>
-                                            {% if current_user.is_authenticated and inscripcion.user.id != current_user.id and ya_inscrito %}
-                                                {% set ya_calificado = inscripcion.user.calificaciones_recibidas
-                                                    | selectattr("partido_id", "equalto", partido.id)
-                                                    | selectattr("evaluador_id", "equalto", current_user.id)
-                                                    | list | length > 0 %}
-                                                {% if partido.cerrado %}
-                                                    {% if not ya_calificado %}
-                                                        <a href="{{ url_for('calificar_jugador_individual', partido_id=partido.id, jugador_id=inscripcion.user.id) }}" class="btn btn-outline-primary btn-sm">Calificar</a>
-                                                    {% else %}
-                                                        <span class="text-success">Ya calificado</span>
-                                                    {% endif %}
-                                                {% else %}
-                                                    <small class="text-muted">Disponible tras cierre</small>
-                                                {% endif %}
-                                            {% endif %}
-                                        </div>
-                                    </li>
+    <div class="d-flex align-items-center">
+        <img src="{{ url_for('static', filename='profile_pics/' ~ inscripcion.user.foto_perfil) }}"
+             alt="Foto de {{ inscripcion.user.username }}"
+             class="rounded-circle me-3"
+             width="40" height="40">
+        <div>
+            <a href="{{ url_for('perfil_usuario', user_id=inscripcion.user.id) }}" class="fw-semibold">
+                {{ inscripcion.user.username }}
+            </a>
+            <div class="text-muted small">
+                {% set promedio = calificacion_jugador_en_partido(inscripcion.user, partido.id) %}
+                {% if promedio %}
+                    Promedio: {{ promedio }}/10
+                {% else %}
+                    Sin calificaciones
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón de calificación (si aplica) -->
+    <div>
+        {% if current_user.is_authenticated and inscripcion.user.id != current_user.id and ya_inscrito %}
+            {% set ya_calificado = inscripcion.user.calificaciones_recibidas
+                | selectattr("partido_id", "equalto", partido.id)
+                | selectattr("evaluador_id", "equalto", current_user.id)
+                | list | length > 0 %}
+            {% if partido.cerrado %}
+                {% if not ya_calificado %}
+                    <a href="{{ url_for('calificar_jugador_individual', partido_id=partido.id, jugador_id=inscripcion.user.id) }}"
+                       class="btn btn-outline-primary btn-sm">Calificar</a>
+                {% else %}
+                    <span class="text-success">Ya calificado</span>
+                {% endif %}
+            {% else %}
+                <small class="text-muted">Disponible tras cierre</small>
+            {% endif %}
+        {% endif %}
+    </div>
+</li>
                                 {% endfor %}
                             {% else %}
                                 <li class="list-group-item text-muted">No hay jugadores en este equipo.</li>
@@ -293,6 +321,11 @@
     </div>
 </div>
 
+<script
+  async
+  defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqmMoyKGBgYjkpk_kf3fBrgZbtXRGRm9o&callback=initMapa">
+</script>
 <script>
 function copiarLink() {
     const input = document.getElementById('link-invitacion');
@@ -368,5 +401,34 @@ function invitarUsuario(partidoId, userId) {
             alert("Error de red al enviar la invitación.");
         });
 }
+</script>
+
+<script>
+    function initMapa() {
+        const lat = parseFloat('{{ partido.latitud }}');
+        const lng = parseFloat('{{ partido.longitud }}');
+        const mapaDiv = document.getElementById('mapa-ubicacion');
+
+        if (mapaDiv && !isNaN(lat) && !isNaN(lng)) {
+            const mapa = new google.maps.Map(mapaDiv, {
+                center: { lat: lat, lng: lng },
+                zoom: 16,
+                disableDefaultUI: true
+            });
+
+            new google.maps.Marker({
+                position: { lat: lat, lng: lng },
+                map: mapa
+            });
+
+            const btn = document.getElementById('btn-como-llegar');
+            if (btn) {
+                const destino = `${lat},${lng}`;
+                btn.href = `https://www.google.com/maps/dir/?api=1&destination=${destino}&travelmode=driving`;
+            }
+        }
+    }
+</script>
+
 </script>
 {% endblock %}

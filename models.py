@@ -79,6 +79,9 @@ class Partido(db.Model):
     cerrado = db.Column(db.Boolean, default=False)
     solo_por_invitacion = db.Column(db.Boolean, default=False)
     enlace_invitacion = db.Column(db.String(100), unique=True, nullable=True)  # ✅ Link público
+    cancelado = db.Column(db.Boolean, default=False)
+    latitud = db.Column(db.Float)
+    longitud = db.Column(db.Float)
 
     organizador_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     organizador = db.relationship('User', back_populates='partidos_creados')

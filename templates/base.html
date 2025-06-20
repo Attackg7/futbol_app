@@ -22,6 +22,25 @@
         padding-top: 70px;
         color: #1e293b;
     }
+    .elegant-chevron {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-left: 3px solid #ffc107;  /* amarillo suave */
+    border-bottom: 3px solid #ffc107;
+    transform: rotate(45deg);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0.8;
+    margin: 8px;
+    cursor: pointer;
+}
+
+.elegant-chevron:hover {
+    transform: rotate(45deg) scale(1.1);
+    opacity: 1;
+}
+
+
     .notification-badge {
     position: absolute;
     top: -4px;
@@ -348,8 +367,7 @@
 <nav class="navbar navbar-expand-lg fixed-top shadow">
     <div class="container">
         {% if request.endpoint not in ['index', 'inicio'] %}
-        <a href="javascript:history.back()" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Volver">
-            <i class="bi bi-arrow-left"></i>
+        <a href="javascript:history.back()" class="elegant-chevron" data-bs-toggle="tooltip" title="Volver"></a>
         </a>
         {% endif %}
         <a class="navbar-brand" href="{{ url_for('index') if current_user.is_authenticated else url_for('inicio') }}">

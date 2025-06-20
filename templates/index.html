@@ -451,9 +451,8 @@ block content %}
               </form>
               {% endif %} {# Botón REGISTRAR RESULTADO: si no expiró y no está
               cerrado #} {% set partido_empezado_hace_2_horas = (now -
-              partido.fecha_hora).total_seconds() >= 7200 %} {% if not
-              partido.esta_expirado() and not partido.cerrado and
-              partido_empezado_hace_2_horas %}
+              partido.fecha_hora).total_seconds() >= 7200 %} 
+              {% if current_user.id == partido.organizador_id and not partido.cerrado and partido.resultado is none and partido_empezado_hace_2_horas %}
               <a
                 href="{{ url_for('registrar_resultado', partido_id=partido.id) }}"
                 class="btn btn-outline-success btn-sm w-100"
