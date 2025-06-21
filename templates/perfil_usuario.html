@@ -79,7 +79,7 @@
 
         <div class="progress mx-auto mt-2" style="max-width: 80%; height: 10px;">
             <div class="progress-bar bg-success" role="progressbar"
-                 style="width: {{ promedio_redondeado * 10 }}%;" aria-valuenow="{{ promedio_redondeado * 10 }}"
+                 style="width: '{{ (promedio_redondeado * 10) | int }}%';" aria-valuenow="{{ (promedio_redondeado * 10) | int }}"
                  aria-valuemin="0" aria-valuemax="100"></div>
         </div>
 
