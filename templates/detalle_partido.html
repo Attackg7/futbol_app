@@ -151,18 +151,21 @@
 
             <!-- Columna derecha: mapa -->
             <div class="col-md-6">
-                <div class="card shadow-sm border-0">
+  <div class="card shadow-sm border-0">
     <div class="card-header bg-white fw-bold text-secondary">
-        <i class="fas fa-map-marker-alt me-1 text-danger"></i> Ubicación en el mapa
+      <i class="fas fa-map-marker-alt me-1 text-danger"></i> Ubicación en el mapa
     </div>
-    <div id="mapa-ubicacion" class="rounded-bottom" style="height: 250px;"></div>
 
-                <a id="btn-como-llegar" class="btn btn-outline-primary btn-sm mt-2" target="_blank">
-                    <i class="fas fa-location-arrow me-1"></i> Cómo llegar
-                </a>
-            </div>
-        </div>
+    <!-- AQUÍ el mapa -->
+    <div id="map" class="rounded-bottom" style="height: 250px; width: 100%;"></div>
+
+    <div class="card-body">
+      <a id="btn-como-llegar" class="btn btn-outline-primary btn-sm mt-2" target="_blank">
+        <i class="fas fa-location-arrow me-1"></i> Cómo llegar
+      </a>
     </div>
+  </div>
+</div>
 </div>
 
 
@@ -321,11 +324,7 @@
     </div>
 </div>
 
-<script
-  async
-  defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqmMoyKGBgYjkpk_kf3fBrgZbtXRGRm9o&callback=initMapa">
-</script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_key }}&callback=initMap&libraries=places" async defer></script>
 <script>
 function copiarLink() {
     const input = document.getElementById('link-invitacion');
@@ -404,31 +403,37 @@ function invitarUsuario(partidoId, userId) {
 </script>
 
 <script>
-    function initMapa() {
-        const lat = parseFloat('{{ partido.latitud }}');
-        const lng = parseFloat('{{ partido.longitud }}');
-        const mapaDiv = document.getElementById('mapa-ubicacion');
+  function initMap() {
+    const lat = {{ partido.latitud or 0 }};
+    const lng = {{ partido.longitud or 0 }};
 
-        if (mapaDiv && !isNaN(lat) && !isNaN(lng)) {
-            const mapa = new google.maps.Map(mapaDiv, {
-                center: { lat: lat, lng: lng },
-                zoom: 16,
-                disableDefaultUI: true
-            });
+    const mapElement = document.getElementById("map");
 
-            new google.maps.Marker({
-                position: { lat: lat, lng: lng },
-                map: mapa
-            });
-
-            const btn = document.getElementById('btn-como-llegar');
-            if (btn) {
-                const destino = `${lat},${lng}`;
-                btn.href = `https://www.google.com/maps/dir/?api=1&destination=${destino}&travelmode=driving`;
-            }
-        }
+    if (!mapElement) {
+      console.error("El div #map no existe.");
+      return;
     }
+
+    const map = new google.maps.Map(mapElement, {
+      center: { lat: lat, lng: lng },
+      zoom: 15,
+    });
+
+    new google.maps.Marker({
+      position: { lat: lat, lng: lng },
+      map: map,
+      title: "Lugar del partido",
+    });
+  }
+
+  window.initMap = initMap;
 </script>
+
+<!-- ESTE SCRIPT DEBE IR DESPUÉS DEL DIV -->
+<script
+  src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_key }}&callback=initMap&libraries=places"
+  async defer
+></script>
 
 </script>
 {% endblock %}

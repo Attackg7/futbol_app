@@ -9,10 +9,11 @@ import uuid
 from datetime import datetime, timezone
 from models import Notificacion
 from flask_migrate import Migrate
-
+from dotenv import load_dotenv
+from flask import current_app
 
 now = datetime.now()
-
+load_dotenv()
 
 
 app = Flask(__name__)
@@ -21,6 +22,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'futbol.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+app.config['GOOGLE_MAPS_API_KEY'] = os.environ.get('GOOGLE_MAPS_API_KEY')
 # Inicializar extensiones
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -211,7 +213,7 @@ def allowed_file(filename):
 @app.route('/crear', methods=['GET', 'POST'])
 @login_required
 def crear_partido():
-    amigos = current_user.obtener_amigos()  # Usa tu método ya definido
+    amigos = current_user.obtener_amigos()
 
     if request.method == 'POST':
         fecha_str = request.form['fecha']
@@ -230,7 +232,7 @@ def crear_partido():
             max_jugadores=int(request.form['max_jugadores']),
             organizador_id=current_user.id,
             solo_por_invitacion=solo_por_invitacion,
-            enlace_invitacion=enlace_unico  # 👈 AQUI
+            enlace_invitacion=enlace_unico
         )
         db.session.add(nuevo_partido)
         db.session.commit()
@@ -244,8 +246,12 @@ def crear_partido():
 
         return redirect(url_for('detalle_partido', partido_id=nuevo_partido.id))
 
-    return render_template('crear_partido.html', amigos=amigos)
-
+    # 👇 aquí es donde pasas la clave a la plantilla
+    return render_template(
+        'crear_partido.html',
+        amigos=amigos,
+        google_maps_key=current_app.config['GOOGLE_MAPS_API_KEY']
+    )
 
 
 
@@ -319,7 +325,8 @@ from models import Invitacion
 def detalle_partido(partido_id):
     partido = Partido.query.get_or_404(partido_id)
     calificaciones = list(partido.calificaciones)
-
+    
+    
     # Saber si el usuario está inscrito
     ya_inscrito = Inscripcion.query.filter_by(user_id=current_user.id, partido_id=partido.id).first() is not None
 
@@ -346,7 +353,7 @@ def detalle_partido(partido_id):
             User.id != current_user.id
         ).all()
          
-
+    
     return render_template(
         'detalle_partido.html',
         partido=partido,
@@ -355,8 +362,8 @@ def detalle_partido(partido_id):
         invitado=invitado,
         amigos=amigos,
         invitados_ids=invitados_ids,
-        usuarios_buscados=usuarios_buscados
-
+        usuarios_buscados=usuarios_buscados,
+        google_maps_key=current_app.config['GOOGLE_MAPS_API_KEY']  # 👈 Aquí
         
     )
         

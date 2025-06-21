@@ -77,8 +77,6 @@
     </div>
 </div>
 
-<!-- GOOGLE MAPS API -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqmMoyKGBgYjkpk_kf3fBrgZbtXRGRm9o&libraries=places"></script>
 
 <!-- LÓGICA DEL AUTOCOMPLETADO Y MAPA -->
 <script>
@@ -88,12 +86,12 @@
     function initAutocomplete() {
         const input = document.getElementById('lugar');
         const autocomplete = new google.maps.places.Autocomplete(input, {
-  types: ['establishment'], // lugares como canchas, estadios, parques
-  componentRestrictions: { country: 'co' }
+            types: ['establishment'],
+            componentRestrictions: { country: 'co' }
         });
 
         const mapaContenedor = document.getElementById('mapa-previa');
-        const centroInicial = { lat: 4.7110, lng: -74.0721 }; // Bogotá
+        const centroInicial = { lat: 4.7110, lng: -74.0721 };
 
         map = new google.maps.Map(mapaContenedor, {
             center: centroInicial,
@@ -128,25 +126,9 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // Restringe fechas anteriores
-        const inputFecha = document.getElementById('fecha');
-        const today = new Date();
-        const localDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const formatted = localDate.toISOString().split('T')[0];
-        inputFecha.setAttribute('min', formatted);
-
-        initAutocomplete();
-
-        // Validación del formulario
-        const form = document.querySelector('form');
-        form.addEventListener('submit', function (e) {
-            if (!lugarValido) {
-                e.preventDefault();
-                document.getElementById('error-lugar').classList.remove('d-none');
-                document.getElementById('lugar').focus();
-            }
-        });
-    });
+    window.initAutocomplete = initAutocomplete;
 </script>
+
+<!-- ✅ Este SÍ debe quedar -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_key }}&callback=initAutocomplete&libraries=places" async defer></script>
 {% endblock %}
