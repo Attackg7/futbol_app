@@ -371,8 +371,8 @@
         </a>
         {% endif %}
         <a class="navbar-brand" href="{{ url_for('index') if current_user.is_authenticated else url_for('inicio') }}">
-            <i class="bi bi-soccer-ball"></i> Cancheros
-        </a>
+    <img src="{{ url_for('static', filename='images/LogoMATCHES.png') }}" alt="Logo Cancheros" style="height: 40px;">
+</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
                 aria-controls="mainNavbar" aria-expanded="false" aria-label="Menú">
             <span class="navbar-toggler-icon"></span>

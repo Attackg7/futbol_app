@@ -93,12 +93,18 @@ class Partido(db.Model):
         return self.fecha_hora + timedelta(hours=12)
 
     def esta_expirado(self):
-        return datetime.utcnow() > self.tiempo_limite() and not self.cerrado
+        return datetime.now() > self.tiempo_limite() and not self.cerrado
 
     def generar_enlace_unico(self):
         """Genera un enlace de invitación si aún no existe"""
         if not self.enlace_invitacion:
             self.enlace_invitacion = str(uuid4())
+    
+    def esta_en_curso(self):
+        ahora =  datetime.now()
+        duracion = timedelta(hours=2)  # Ajusta si tu partido dura más
+        return self.fecha_hora <= ahora <= self.fecha_hora + duracion
+    
     def equipo_ganador(self):
         if not self.resultado:
             return None

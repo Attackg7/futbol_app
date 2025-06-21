@@ -43,6 +43,7 @@ from datetime import datetime
 def inicio():
     error = None
     mode = request.form.get('mode', 'login')
+    next_page = request.args.get('next')  # ✅ Guarda la ruta original
 
     if request.method == 'POST':
         username = request.form['username']
@@ -52,6 +53,11 @@ def inicio():
             user = User.query.filter_by(username=username).first()
             if user and check_password_hash(user.password, password):
                 login_user(user)
+
+                # ✅ Redirige al enlace original si existe
+                if next_page:
+                    return redirect(next_page)
+
                 return redirect(url_for('index'))
             error = "Usuario o contraseña incorrectos"
 
@@ -77,6 +83,11 @@ def inicio():
 
     return render_template('inicio.html', error=error)
 
+@app.before_request
+def mostrar_mensaje_si_redirigido():
+    if not current_user.is_authenticated and request.endpoint == 'inicio':
+        if request.args.get('next'):
+            flash("Primero debes iniciar sesión para acceder a esa página.", "warning")
 
 
 @app.route('/eventos')
@@ -100,22 +111,24 @@ def index():
         cancelado_por_falta = False
         es_organizador = current_user.is_authenticated and current_user.id == partido.organizador_id
 
-        # 1. CANCELADO POR FALTA (<70%) Y ELIMINACIÓN A LOS 10 MIN
+        # ✅ CANCELADO POR FALTA (<70%) Y ELIMINACIÓN A LOS 10 MIN
         if not partido.cerrado and ha_empezado and porcentaje_actual < 0.7:
-            cancelado_por_falta = True
             if ha_pasado_10_min:
                 db.session.delete(partido)
                 db.session.commit()
-                continue  # partido eliminado, no mostrar
+                continue  # Partido eliminado, no mostrar
+            else:
+                partido.cancelado = True  # Marcar como cancelado
+                db.session.commit()
+                cancelado_por_falta = True
 
-        # 2. ELIMINACIÓN POR NO TENER RESULTADO A LAS 24 HORAS
+        # ✅ ELIMINACIÓN POR NO TENER RESULTADO A LAS 24 HORAS
         if not partido.cerrado and ha_empezado and partido.resultado is None and ha_pasado_24_horas:
-            # Eliminar también inscripciones (para que no aparezca en historial)
             for inscripcion in partido.inscripciones:
                 db.session.delete(inscripcion)
             db.session.delete(partido)
             db.session.commit()
-            continue  # partido eliminado, no mostrar
+            continue  # Partido eliminado, no mostrar
 
         # Mostrar botón de resultado 2 horas después
         puede_registrar_resultado = (
@@ -171,7 +184,7 @@ def index():
         porcentaje = datos['porcentaje_inscritos']
         ya_empezo = partido.fecha_hora <= now
 
-        if cancelado:
+        if cancelado or partido.cancelado:
             terminados.append(datos)
         elif partido.cerrado or partido.resultado:
             terminados.append(datos)
@@ -183,9 +196,6 @@ def index():
     datos_partidos = proximos + en_curso + terminados
 
     return render_template('index.html', datos_partidos=datos_partidos, now=now)
-
-
-
 
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -257,6 +267,10 @@ def logout():
 def unirse_partido(partido_id):
     partido = Partido.query.get_or_404(partido_id)
 
+    if partido.cancelado:
+        flash("Este partido fue cancelado. Ya no puedes unirte.", "danger")
+        return redirect(url_for('index'))
+
     inscripcion_existente = Inscripcion.query.filter_by(user_id=current_user.id, partido_id=partido.id).first()
     if inscripcion_existente:
         flash('Ya estás inscrito en este partido.')
@@ -269,6 +283,8 @@ def unirse_partido(partido_id):
     equipo1_lleno = count_equipo1 >= partido.max_jugadores
     equipo2_lleno = count_equipo2 >= partido.max_jugadores
 
+   
+    
     if request.method == 'POST':
         equipo = request.form.get('equipo')
         if equipo not in [partido.equipo1, partido.equipo2]:
@@ -278,6 +294,8 @@ def unirse_partido(partido_id):
         if (equipo == partido.equipo1 and equipo1_lleno) or (equipo == partido.equipo2 and equipo2_lleno):
             flash(f'El equipo {equipo} ya tiene el cupo completo.')
             return redirect(url_for('unirse_partido', partido_id=partido.id))
+        
+        
 
         nueva_inscripcion = Inscripcion(user_id=current_user.id, partido_id=partido.id, equipo=equipo)
         db.session.add(nueva_inscripcion)
@@ -554,10 +572,9 @@ def perfil_usuario(user_id):
 
 
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in  allowed_extensions
 
 @app.context_processor
 def utility_processor():
@@ -913,19 +930,37 @@ def buscar_usuarios():
 def unirse_por_enlace(enlace_invitacion):
     partido = Partido.query.filter_by(enlace_invitacion=enlace_invitacion).first_or_404()
 
-    # Validar si ya está inscrito
+    # ❌ Si fue cancelado
+    if partido.cancelado:
+        return render_template(
+            "partido_bloqueado.html",
+            titulo="Partido cancelado",
+            mensaje="Este partido fue cancelado. Ya no puedes unirte.",
+            partido=partido
+        )
+
+    # ❌ Si está en curso
+    if partido.esta_en_curso():
+        return render_template(
+            "partido_bloqueado.html",
+            titulo="Partido en curso",
+            mensaje="Este partido ya está en curso. Ya no puedes unirte.",
+            partido=partido
+        )
+
+    # ✅ Si ya está inscrito, mostrar detalle
     ya_inscrito = Inscripcion.query.filter_by(user_id=current_user.id, partido_id=partido.id).first()
     if ya_inscrito:
         flash("Ya estás inscrito en este partido.")
         return redirect(url_for('detalle_partido', partido_id=partido.id))
 
-    # Si está cerrado, no se puede unir
+    # ✅ Si está cerrado, no permitir
     if partido.cerrado:
         flash("El partido ya fue cerrado.")
         return redirect(url_for('detalle_partido', partido_id=partido.id))
 
+    # ✅ Redirige al formulario de inscripción normal
     return redirect(url_for('unirse_partido', partido_id=partido.id))
-
 @app.route('/ajax/aceptar_invitacion/<int:invitacion_id>', methods=['POST'])
 @login_required
 def ajax_aceptar_invitacion(invitacion_id):

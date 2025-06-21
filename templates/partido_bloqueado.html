@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-body text-center py-5">
+            <h2 class="text-danger mb-4">{{ titulo }}</h2>
+            <p class="lead">{{ mensaje }}</p>
+
+            {% if partido %}
+                <hr class="my-4">
+                <h5 class="mb-3">Información del partido</h5>
+                <p><strong>Equipos:</strong> {{ partido.equipo1 }} vs {{ partido.equipo2 }}</p>
+                <p><strong>Fecha y hora:</strong> {{ partido.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</p>
+                <p><strong>Lugar:</strong> {{ partido.lugar }}</p>
+            {% endif %}
+
+            <a href="{{ url_for('index') }}" class="btn btn-outline-primary mt-4">Volver al inicio</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

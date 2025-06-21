@@ -42,65 +42,49 @@
 {% set total_calificaciones = calificaciones | length %}
 
 <div class="container py-4">
-    <!-- Perfil -->
-    <div class="card text-center mb-4 shadow-sm">
-        <div class="card-body">
-            <div class="position-relative d-inline-block">
-                <img id="foto-perfil" src="{{ url_for('static', filename='profile_pics/' ~ usuario.foto_perfil) }}"
-                     class="rounded-circle border border-3" width="120" height="120" alt="Foto de perfil">
-                {% if current_user.id == usuario.id %}
-                    <label for="foto_input" class="position-absolute bottom-0 end-0 bg-white rounded-circle p-2 shadow"
-                           style="cursor: pointer;" title="Cambiar foto">
-                        <i class="bi bi-camera-fill"></i>
-                    </label>
-                    <form id="form-foto" action="{{ url_for('subir_foto') }}" method="POST" enctype="multipart/form-data">
-                        <input type="file" name="foto_perfil" id="foto_input" accept="image/*" class="d-none">
-                    </form>
+    <div class="fifa-card-fut position-relative text-center mx-auto mb-4">
+        <div class="fut-rating">{{ '{:.1f}'.format(promedio_redondeado).rstrip('0').rstrip('.') }}</div>
+        <div class="fut-username">{{ usuario.username }}</div>
+
+        <img class="fut-photo" id="foto-perfil" src="{{ url_for('static', filename='profile_pics/' ~ usuario.foto_perfil) }}" alt="Foto">
+
+        {% if current_user.id == usuario.id %}
+        <label for="foto_input" class="fut-edit-icon" title="Cambiar foto">
+            <i class="bi bi-camera-fill"></i>
+        </label>
+        <form id="form-foto" action="{{ url_for('subir_foto') }}" method="POST" enctype="multipart/form-data">
+            <input type="file" name="foto_perfil" id="foto_input" accept="image/*" class="d-none">
+        </form>
+        {% endif %}
+
+        <div class="fut-description badge bg-secondary mt-2">{{ descripcion }}</div>
+
+        <div class="fut-stars text-warning">
+            {% for i in range(1, 11) %}
+                {% if promedio_redondeado >= i %}
+                    <i class="fa-solid fa-star"></i>
+                {% elif promedio_redondeado + 0.5 >= i %}
+                    <i class="fa-solid fa-star-half-stroke"></i>
+                {% else %}
+                    <i class="fa-regular fa-star"></i>
                 {% endif %}
-            </div>
-            <h2 class="mt-3">{{ usuario.username }}</h2>
-
-            <!-- Promedio -->
-            <p class="mb-1">
-                <p class="text-muted mb-1">
-  Promedio general:
-  <span class="badge bg-{{ badge_class }} px-3 py-2 rounded-pill">
-    {{ '{:.1f}'.format(promedio_redondeado).rstrip('0').rstrip('.') }} / 10
-  </span>
-</p>
-</p>
-            </p>
-            <span class="badge bg-{{ badge_class }} fs-6 px-3 py-2 mb-1">{{ descripcion }}</span>
-
-            <!-- Estrellas visuales -->
-            <div class="text-warning fs-5 mb-2">
-                {% for i in range(1, 11) %}
-                    {% if promedio_redondeado >= i %}
-                        <i class="fa-solid fa-star"></i>
-                    {% elif promedio_redondeado + 0.5 >= i %}
-                        <i class="fa-solid fa-star-half-stroke"></i>
-                    {% else %}
-                        <i class="fa-regular fa-star"></i>
-                    {% endif %}
-                {% endfor %}
-            </div>
-
-            <!-- Total de calificaciones -->
-            <p class="text-muted mb-2">
-                <i class="fa-solid fa-users"></i> {{ total_calificaciones }} calificación{{ total_calificaciones != 1 and 'es' or '' }} recibid{{ total_calificaciones != 1 and 'as' or 'a' }}
-            </p>
-
-            <!-- Barra de progreso -->
-            <div class="progress mx-auto mb-3" style="max-width: 300px; height: 12px;">
-                <div class="progress-bar bg-{{ badge_class }}" role="progressbar"
-                     style="width: {{ promedio_redondeado * 10 }}%;" aria-valuenow="{{ promedio_redondeado * 10 }}"
-                     aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-
-            <div id="mensaje" class="alert alert-success d-none mt-3">Foto actualizada</div>
+            {% endfor %}
         </div>
-    </div>
 
+        
+
+        <div class="text-muted mt-2">
+            <i class="fa-solid fa-users"></i> {{ total_calificaciones }} calificación{{ total_calificaciones != 1 and 'es' or '' }} recibid{{ total_calificaciones != 1 and 'as' or 'a' }}
+        </div>
+
+        <div class="progress mx-auto mt-2" style="max-width: 80%; height: 10px;">
+            <div class="progress-bar bg-success" role="progressbar"
+                 style="width: {{ promedio_redondeado * 10 }}%;" aria-valuenow="{{ promedio_redondeado * 10 }}"
+                 aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+
+        <div id="mensaje" class="alert alert-success d-none mt-2">Foto actualizada</div>
+    </div>
     <!-- Solicitudes -->
     {% if current_user.id == usuario.id %}
     <div class="mb-4">
@@ -264,28 +248,143 @@
     </div>
 </div>
 
-<!-- JS para la foto -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap');
+
+.fifa-card-fut {
+    width: 300px;
+    aspect-ratio: 5 / 7;
+    height: auto;
+    position: relative;
+    padding: 1rem;
+
+    /* FONDO DEGRADADO ELEGANTE BLANCO-VERDE CLARO */
+    background-image: linear-gradient(135deg, #ffffff, #a5d6a7);
+    background-size: cover;
+    background-position: center;
+    color: #000;
+    font-family: 'Orbitron', sans-serif;
+
+    /* MÁSCARA DE ESCUDO */
+    mask-image: url('/static/images/escudo_mask.svg');
+    -webkit-mask-image: url('/static/images/escudo_mask.svg');
+    mask-size: contain;
+    -webkit-mask-size: contain;
+    mask-position: center;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+
+    /* BORDE DORADO */
+    
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 215, 0, 0.3);
+    border-radius: 30px; /* ayuda a suavizar las esquinas si la máscara no recorta todo */
+    overflow: hidden;
+}
+
+
+.fut-rating {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-size: 2.5rem;
+    font-weight: 800;
+    text-shadow: 1px 1px 2px black;
+}
+
+.fut-username {
+    position: absolute;
+    top: 20px;
+    right: 15px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px black;
+}
+
+.fut-photo {
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid white;
+    margin: 80px auto 10px;
+    display: block;
+    box-shadow: 0 0 15px rgba(255,255,255,0.6);
+}
+
+.fut-edit-icon {
+    position: absolute;
+    top: 170px;
+    left: calc(50% + 40px);
+    background: #fff;
+    padding: 6px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0,0,0,0.4);
+    color: #000;
+}
+
+.fut-description {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
+.fut-stars {
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+}
+
+.fut-stats {
+    position: absolute;
+    bottom: 25px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 0 10px;
+}
+
+.fut-stats div {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 0.5rem;
+    font-weight: bold;
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.3);
+}
+</style>
+
+<!-- JS para foto -->
 <script>
-    const input = document.getElementById('foto_input');
-    const img = document.getElementById('foto-perfil');
-    const form = document.getElementById('form-foto');
-    const mensaje = document.getElementById('mensaje');
+const input = document.getElementById('foto_input');
+const img = document.getElementById('foto-perfil');
+const form = document.getElementById('form-foto');
+const mensaje = document.getElementById('mensaje');
 
-    input.addEventListener('change', () => {
-        const formData = new FormData(form);
-        fetch('{{ url_for("subir_foto") }}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.filename) {
-                img.src = `/static/profile_pics/${data.filename}?v=${data.timestamp}`;
-                mensaje.classList.remove('d-none');
-                setTimeout(() => mensaje.classList.add('d-none'), 2000);
-            }
-        });
-    });
+input.addEventListener('change', () => {
+    const archivo = input.files[0];
+    if (!archivo) return;
+
+    const formData = new FormData();
+    formData.append('foto_perfil', archivo); // ← aseguramos que coincida con Flask
+
+    fetch('{{ url_for("subir_foto") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.filename) {
+            img.src = `/static/profile_pics/${data.filename}?v=${data.timestamp}`;
+            mensaje.classList.remove('d-none');
+            setTimeout(() => mensaje.classList.add('d-none'), 2000);
+        } else {
+            console.error('Error del servidor:', data.error);
+        }
+    })
+    .catch(err => console.error('Error de red:', err));
+});
 </script>
-
 {% endblock %}
