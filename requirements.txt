@@ -4,3 +4,4 @@ flask_login
 werkzeug
 gunicorn
 flask_migrate
+python-dotenv
