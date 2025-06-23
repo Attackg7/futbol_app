@@ -3,6 +3,7 @@
 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css"/>
 
 <style>
     body {
@@ -28,7 +29,7 @@
         color: #256d1b;
     }
 
-    .form-control {
+    .form-control, .form-select {
         border-radius: 12px;
         padding: 0.75rem;
     }
@@ -62,7 +63,7 @@
 </style>
 
 <div class="container py-5 d-flex justify-content-center align-items-center min-vh-100">
-    <div class="register-card" style="max-width: 400px; width: 100%;">
+    <div class="register-card" style="max-width: 500px; width: 100%;">
         <h3 class="text-center mb-4">Crear cuenta</h3>
 
         {% if error %}
@@ -72,22 +73,167 @@
         {% endif %}
 
         <form method="POST">
+            <input type="hidden" name="username" id="username">
+
             <div class="mb-3">
-                <label for="username" class="form-label">Nombre de usuario</label>
-                <input type="text" name="username" id="username" class="form-control"
-                       placeholder="Tu Usuario" required value="{{ request.form.username }}">
+                <label for="nombre" class="form-label">Nombre</label>
+                <input type="text" name="nombre" id="nombre" class="form-control" placeholder="Tu nombre" required>
+            </div>
+            <div class="mb-3">
+                <label for="apellido" class="form-label">Apellido</label>
+                <input type="text" name="apellido" id="apellido" class="form-control" placeholder="Tu apellido" required>
+                <div id="nombre-feedback" class="invalid-feedback">Ese nombre completo ya está registrado.</div>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Correo electrónico</label>
+                <input type="email" name="email" id="email" class="form-control" placeholder="ejemplo@correo.com" required>
+                <div id="email-feedback" class="invalid-feedback">Ese correo ya está registrado.</div>
+            </div>
+            <div class="mb-3">
+                <label for="pais" class="form-label">País</label>
+                <select class="form-select" id="pais" name="pais" required>
+                    <option value="Colombia" selected>🇨🇴 Colombia</option>
+                    <option value="México">🇲🇽 México</option>
+                    <option value="Argentina">🇦🇷 Argentina</option>
+                    <option value="Chile">🇨🇱 Chile</option>
+                    <option value="Perú">🇵🇪 Perú</option>
+                    <option value="España">🇪🇸 España</option>
+                    <option value="Otro">🌍 Otro</option>
+                </select>
+            </div>
+            <div class="mb-3" id="ciudad-group">
+                <label for="ciudad" class="form-label">Ciudad o municipio</label>
+                <select class="form-select" name="ciudad" id="ciudad"></select>
+                <input type="text" name="ciudad_otro" id="ciudad-otro" class="form-control mt-2" placeholder="Escribe tu municipio" style="display: none;">
+            </div>
+            <div class="mb-3">
+                <label for="telefono" class="form-label">Teléfono</label>
+                <input type="tel" name="telefono" id="telefono" class="form-control" placeholder="Ej. 3001234567" required>
+                <div id="telefono-feedback" class="invalid-feedback">Ese teléfono ya está registrado.</div>
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label">Contraseña</label>
-                <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required>
+                <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required minlength="6">
             </div>
             <div class="d-grid">
                 <button type="submit" class="btn btn-primary">Registrarse</button>
             </div>
         </form>
+
         <div class="mt-4 text-center card-link">
             <a href="{{ url_for('inicio') }}">¿Ya tienes cuenta? Inicia sesión</a>
         </div>
     </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"></script>
+<script>
+const input = document.querySelector("#telefono");
+const iti = window.intlTelInput(input, {
+  preferredCountries: ["co"],
+  initialCountry: "co",
+  nationalMode: true,
+  separateDialCode: true,
+  utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+});
+
+const paisSelect = document.getElementById("pais");
+const ciudadSelect = document.getElementById("ciudad");
+const ciudadGroup = document.getElementById("ciudad-group");
+const ciudadOtro = document.getElementById("ciudad-otro");
+
+const ciudadesColombia = [
+  "Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena",
+  "Bucaramanga", "Manizales", "Pereira", "Cúcuta", "Santa Marta",
+  "Ibagué", "Villavicencio", "Neiva", "Montería", "Armenia",
+  "Sincelejo", "Popayán", "Pasto", "Tunja", "Riohacha", "Otro"
+];
+
+function cargarCiudades() {
+  if (paisSelect.value === "Colombia") {
+    ciudadSelect.innerHTML = ciudadesColombia.map(c => `<option value="${c}">${c}</option>`).join('');
+    ciudadGroup.style.display = "block";
+  } else {
+    ciudadSelect.innerHTML = '';
+    ciudadGroup.style.display = "none";
+    ciudadOtro.style.display = "none";
+  }
+}
+
+ciudadSelect.addEventListener("change", () => {
+  ciudadOtro.style.display = ciudadSelect.value === "Otro" ? "block" : "none";
+  ciudadOtro.required = ciudadSelect.value === "Otro";
+});
+
+paisSelect.addEventListener("change", cargarCiudades);
+document.addEventListener("DOMContentLoaded", cargarCiudades);
+
+function capitalizar(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+async function verificarCampo(campo, valor) {
+  const res = await fetch("/api/verificar-usuario", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ campo, valor })
+  });
+  const data = await res.json();
+  return data.existe;
+}
+
+function marcarCampo(inputId, feedbackId, existe) {
+  const input = document.getElementById(inputId);
+  const feedback = document.getElementById(feedbackId);
+  if (existe) {
+    input.classList.add("is-invalid");
+    feedback.style.display = "block";
+  } else {
+    input.classList.remove("is-invalid");
+    feedback.style.display = "none";
+  }
+}
+
+document.getElementById("email").addEventListener("blur", async () => {
+  const email = document.getElementById("email").value;
+  const existe = await verificarCampo("email", email);
+  marcarCampo("email", "email-feedback", existe);
+});
+
+document.getElementById("telefono").addEventListener("blur", async () => {
+  const tel = document.getElementById("telefono").value;
+  const existe = await verificarCampo("telefono", tel);
+  marcarCampo("telefono", "telefono-feedback", existe);
+});
+
+document.getElementById("nombre").addEventListener("blur", actualizarYVerificarNombre);
+document.getElementById("apellido").addEventListener("blur", actualizarYVerificarNombre);
+
+async function actualizarYVerificarNombre() {
+  const nombre = capitalizar(document.getElementById("nombre").value.trim());
+  const apellido = capitalizar(document.getElementById("apellido").value.trim());
+  const completo = nombre + " " + apellido;
+  document.getElementById("username").value = completo;
+
+  if (nombre && apellido) {
+    const existe = await verificarCampo("nombre_apellido", completo);
+    marcarCampo("apellido", "nombre-feedback", existe);
+  }
+}
+
+document.querySelector("form").addEventListener("submit", function(e) {
+  const password = document.getElementById("password").value;
+  if (password.length < 6) {
+    e.preventDefault();
+    alert("La contraseña debe tener al menos 6 caracteres.");
+    return;
+  }
+  if (!iti.isValidNumber()) {
+    e.preventDefault();
+    alert("Por favor ingresa un número de teléfono válido.");
+    return;
+  }
+});
+</script>
 {% endblock %}

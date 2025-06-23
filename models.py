@@ -14,7 +14,15 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    foto_perfil = db.Column(db.String(120), default='default.jpg')
+    foto_perfil = db.Column(db.String(120), default='logoMATCHES.png')
+    nombre = db.Column(db.String(100), nullable=False)
+    apellido = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=False)
+    pais = db.Column(db.String(100))
+    ciudad = db.Column(db.String(100))
+    telefono = db.Column(db.String(20))
+    email_confirmado = db.Column(db.Boolean, default=False)
+    token_confirmacion = db.Column(db.String(100), nullable=True)
 
     calificaciones_recibidas = db.relationship(
         'Calificacion', foreign_keys='Calificacion.evaluado_id',

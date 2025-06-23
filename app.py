@@ -11,12 +11,26 @@ from models import Notificacion
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 from flask import current_app
+import secrets
+from flask_mail import Mail, Message
+
+
+app = Flask(__name__)
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'davstegonzalez@gmail.com'
+app.config['MAIL_PASSWORD'] = 'rtki lubm kikp wjdo' 
+app.config['MAIL_DEFAULT_SENDER'] = 'davstegonzalez@gmail.com'
+
+
+mail = Mail(app)
 
 now = datetime.now()
 load_dotenv()
 
-
-app = Flask(__name__)
+app.secret_key = '123456'
 app.config['SECRET_KEY'] = 'clave_supersecreta'
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'futbol.db')}"
@@ -45,37 +59,55 @@ from datetime import datetime
 def inicio():
     error = None
     mode = request.form.get('mode', 'login')
-    next_page = request.args.get('next')  # ✅ Guarda la ruta original
+    next_page = request.args.get('next')
 
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
 
         if mode == 'login':
-            user = User.query.filter_by(username=username).first()
+            user = User.query.filter_by(email=email).first()
             if user and check_password_hash(user.password, password):
                 login_user(user)
-
-                # ✅ Redirige al enlace original si existe
-                if next_page:
-                    return redirect(next_page)
-
-                return redirect(url_for('index'))
+                return redirect(next_page or url_for('index'))
             error = "Usuario o contraseña incorrectos"
 
         elif mode == 'register':
-            if User.query.filter_by(username=username).first():
-                error = "El nombre de usuario ya existe"
+            nombre = request.form.get('nombre')
+            apellido = request.form.get('apellido')
+            pais = request.form.get('pais')
+            ciudad = request.form.get('ciudad')
+            telefono = request.form.get('telefono')
+
+            if User.query.filter_by(email=email).first():
+                error = "El correo electrónico ya está registrado."
             else:
                 hashed_pw = generate_password_hash(password)
-                nuevo_usuario = User(username=username, password=hashed_pw)
+                username = f"{nombre.lower()}.{apellido.lower()}"
+                # Asegura unicidad por si ya existe ese username
+                base_username = username
+                i = 1
+                while User.query.filter_by(username=username).first():
+                    username = f"{base_username}{i}"
+                    i += 1
+
+                nuevo_usuario = User(
+                    username=username,
+                    email=email,
+                    password=hashed_pw,
+                    nombre=nombre,
+                    apellido=apellido,
+                    pais=pais,
+                    ciudad=ciudad,
+                    telefono=telefono
+                )
                 db.session.add(nuevo_usuario)
                 db.session.commit()
                 flash("Cuenta creada exitosamente. Ahora puedes iniciar sesión.", "success")
                 return redirect(url_for('inicio'))
 
         elif mode == 'reset':
-            user = User.query.filter_by(username=username).first()
+            user = User.query.filter_by(email=email).first()
             if user:
                 user.password = generate_password_hash(password)
                 db.session.commit()
@@ -83,7 +115,8 @@ def inicio():
                 return redirect(url_for('inicio'))
             error = "Usuario no encontrado"
 
-    return render_template('inicio.html', error=error)
+    return render_template("inicio.html", now=datetime.now())
+
 
 @app.before_request
 def mostrar_mensaje_si_redirigido():
@@ -706,7 +739,75 @@ def registrar_resultado(partido_id):
 
     return render_template('registrar_resultado.html', partido=partido)
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
 
+    error = None
+
+    if request.method == 'POST':
+        form = request.form
+        username = form['username']
+        password = form['password']
+
+        if User.query.filter_by(username=username).first():
+            error = "El nombre de usuario ya existe"
+        elif User.query.filter_by(email=form['email']).first():
+            error = "Ese correo ya está registrado"
+        else:
+            token = secrets.token_urlsafe(32)
+            nuevo = User(
+                username=username,
+                password=generate_password_hash(password),
+                nombre=form['nombre'],
+                apellido=form['apellido'],
+                email=form['email'],
+                pais=form.get('pais'),
+                ciudad=form.get('ciudad'),
+                telefono=form.get('telefono'),
+                token_confirmacion=token,
+                email_confirmado=False
+            )
+            db.session.add(nuevo)
+            db.session.commit()
+
+            try:
+                enlace = url_for('confirmar_email', token=token, _external=True)
+                mensaje = Message('Confirma tu cuenta en Fútbol App',
+                                  recipients=[form['email']],
+                                  body=f"Hola {form['nombre']}, confirma tu cuenta aquí:\n{enlace}")
+                mail.send(mensaje)
+                flash("Revisa tu correo para confirmar tu cuenta.", "info")
+            except Exception as e:
+                flash(f"Error al enviar correo: {str(e)}", "danger")
+
+            return redirect(url_for('inicio'))
+
+    return render_template('register.html', error=error)
+
+
+@app.route('/api/verificar-usuario', methods=['POST'])
+def verificar_usuario():
+    data = request.json
+    campo = data.get("campo")
+    valor = data.get("valor")
+
+    if campo == "email":
+        existe = User.query.filter_by(email=valor).first() is not None
+    elif campo == "telefono":
+        existe = User.query.filter_by(telefono=valor).first() is not None
+    elif campo == "nombre_apellido":
+        partes = valor.strip().split(" ", 1)
+        if len(partes) == 2:
+            nombre, apellido = partes
+            existe = User.query.filter_by(nombre=nombre, apellido=apellido).first() is not None
+        else:
+            existe = False
+    else:
+        return jsonify({"error": "Campo no válido"}), 400
+
+    return jsonify({"existe": existe})
 
 @app.route('/buscar')
 @login_required
@@ -717,8 +818,18 @@ def buscar():
         resultados = User.query.filter(User.username.ilike(f"%{query}%"), User.id != current_user.id).all()
     return render_template('buscar.html', query=query, resultados=resultados, amistades_enviadas=current_user.amistades_enviadas)
 
+@app.route('/confirmar/<token>')
+def confirmar_email(token):
+    usuario = User.query.filter_by(token_confirmacion=token).first()
+    if usuario:
+        usuario.email_confirmado = True
+        usuario.token_confirmacion = None
+        db.session.commit()
+        flash("Tu correo ha sido confirmado. Ya puedes iniciar sesión.", "success")
+    else:
+        flash("Token inválido o expirado.", "danger")
 
-from models import Amistad
+    return redirect(url_for('inicio'))
 
 @app.route('/agregar_amigo/<int:user_id>', methods=['POST'])
 @login_required
