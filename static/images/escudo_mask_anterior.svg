@@ -1,0 +1,7 @@
+<svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  <!-- Capa externa dorada -->
+  <path d="M8,0 H92 Q100,0 100,12 V102 Q100,128 50,140 Q0,128 0,102 V12 Q0,0 8,0 Z" fill="#FFD700"></path>
+
+  <!-- Capa interna negra para permitir visibilidad interior -->
+  <path d="M12,4 H88 Q96,4 96,14 V98 Q96,122 50,134 Q4,122 4,98 V14 Q4,4 12,4 Z" fill="black"></path>
+</svg>

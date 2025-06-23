@@ -159,12 +159,12 @@
     <!-- AQUÍ el mapa -->
     <div id="map" class="rounded-bottom" style="height: 250px; width: 100%;"></div>
 
-    <div class="card-body">
-      <a id="btn-como-llegar" class="btn btn-outline-primary btn-sm mt-2" target="_blank">
+    
+    
+  </div>
+  <a id="btn-como-llegar" class="btn btn-outline-primary btn-sm mt-2" target="_blank">
         <i class="fas fa-location-arrow me-1"></i> Cómo llegar
       </a>
-    </div>
-  </div>
 </div>
 </div>
 
@@ -424,6 +424,11 @@ function invitarUsuario(partidoId, userId) {
       map: map,
       title: "Lugar del partido",
     });
+
+    const btnComoLlegar = document.getElementById("btn-como-llegar");
+    if (btnComoLlegar && lat && lng) {
+      btnComoLlegar.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    }
   }
 
   window.initMap = initMap;

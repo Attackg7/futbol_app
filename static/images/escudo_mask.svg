@@ -1,7 +1,32 @@
-<svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-  <!-- Capa externa dorada -->
-  <path d="M8,0 H92 Q100,0 100,12 V102 Q100,128 50,140 Q0,128 0,102 V12 Q0,0 8,0 Z" fill="#FFD700"></path>
+<svg width="100%" height="100%" viewBox="0 0 300 420" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="goldGradient" x1="0" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#f0c838"></stop>
+      <stop offset="50%" stop-color="#d4af37"></stop>
+      <stop offset="100%" stop-color="#fffbe6"></stop>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.3)"></stop>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"></stop>
+    </linearGradient>
+    <clipPath id="shieldShape">
+      <path d="M20,0 H280 Q300,0 300,20 V300 Q300,360 150,420 Q0,360 0,300 V20 Q0,0 20,0 Z"></path>
+    </clipPath>
+  </defs>
 
-  <!-- Capa interna negra para permitir visibilidad interior -->
-  <path d="M12,4 H88 Q96,4 96,14 V98 Q96,122 50,134 Q4,122 4,98 V14 Q4,4 12,4 Z" fill="black"></path>
+  <!-- Fondo -->
+  <rect width="300" height="420" fill="url(#goldGradient)" clip-path="url(#shieldShape)"></rect>
+
+  <!-- Detalles diagonales -->
+  <g clip-path="url(#shieldShape)" opacity="0.2">
+    <polygon points="0,100 300,0 300,30 0,130" fill="white"></polygon>
+    <polygon points="0,200 300,100 300,130 0,230" fill="white"></polygon>
+    <polygon points="0,300 300,200 300,230 0,330" fill="white"></polygon>
+  </g>
+
+  <!-- Brillo -->
+  <rect width="300" height="420" fill="url(#shine)" clip-path="url(#shieldShape)"></rect>
+  
+  <!-- Contorno -->
+  <path d="M20,0 H280 Q300,0 300,20 V300 Q300,360 150,420 Q0,360 0,300 V20 Q0,0 20,0 Z" fill="none" stroke="#c89c27" stroke-width="4"></path>
 </svg>

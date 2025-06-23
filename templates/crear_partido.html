@@ -127,6 +127,35 @@
     }
 
     window.initAutocomplete = initAutocomplete;
+
+
+</script>
+<script>
+    // Establecer fecha mínima como la de hoy
+    document.addEventListener("DOMContentLoaded", function () {
+        const fechaInput = document.getElementById("fecha");
+        const horaInput = document.getElementById("hora");
+
+        const now = new Date();
+
+        // Formato YYYY-MM-DD
+        const hoy = now.toISOString().split("T")[0];
+        fechaInput.setAttribute("min", hoy);
+
+        fechaInput.addEventListener("change", function () {
+            const seleccionada = new Date(fechaInput.value);
+            const hoyDate = new Date(hoy);
+
+            // Si la fecha seleccionada es hoy, limitar la hora
+            if (fechaInput.value === hoy) {
+                const horas = now.getHours().toString().padStart(2, '0');
+                const minutos = now.getMinutes().toString().padStart(2, '0');
+                horaInput.min = `${horas}:${minutos}`;
+            } else {
+                horaInput.removeAttribute("min");
+            }
+        });
+    });
 </script>
 
 <!-- ✅ Este SÍ debe quedar -->
