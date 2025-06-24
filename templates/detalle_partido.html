@@ -205,17 +205,26 @@
 {% endif %}
 
     <!-- Enlace Público -->
-    {% if current_user.id == partido.organizador_id and not partido.solo_por_invitacion %}
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title"><i class="fas fa-link me-2"></i>Enlace público</h5>
-                <div class="input-group">
-                    <input type="text" id="link-invitacion" class="form-control" value="{{ request.host_url }}unirse_por_enlace/{{ partido.enlace_invitacion }}" readonly>
-                    <button class="btn btn-outline-secondary" onclick="copiarLink()"><i class="fas fa-copy"></i> Copiar</button>
-                </div>
+    {% if current_user.id == partido.organizador_id and not partido.cerrado and not partido.cancelado and not partido.esta_en_curso() %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="fas fa-link me-2"></i>
+                {% if partido.solo_por_invitacion %}
+                    Enlace privado para invitados
+                {% else %}
+                    Enlace público para unirse
+                {% endif %}
+            </h5>
+            <div class="input-group">
+                <input type="text" id="link-invitacion" class="form-control" value="{{ request.host_url }}unirse_por_enlace/{{ partido.enlace_invitacion }}" readonly>
+                <button class="btn btn-outline-secondary" onclick="copiarLink()">
+                    <i class="fas fa-copy"></i> Copiar
+                </button>
             </div>
         </div>
-    {% endif %}
+    </div>
+{% endif %}
 
     <!-- Buscador de usuarios -->
     {% if current_user.id == partido.organizador_id and not partido.cerrado and not partido.cancelado and not partido.esta_en_curso() %}

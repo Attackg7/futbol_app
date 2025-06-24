@@ -267,7 +267,7 @@ def crear_partido():
         hora_str = request.form['hora']
         fecha_hora = datetime.strptime(f"{fecha_str} {hora_str}", "%Y-%m-%d %H:%M")
         solo_por_invitacion = 'solo_por_invitacion' in request.form
-        enlace_unico = str(uuid.uuid4()) if not solo_por_invitacion else None
+        
 
         nuevo_partido = Partido(
             fecha_hora=fecha_hora,
@@ -278,9 +278,12 @@ def crear_partido():
             equipo2=request.form['equipo2'],
             max_jugadores=int(request.form['max_jugadores']),
             organizador_id=current_user.id,
-            solo_por_invitacion=solo_por_invitacion,
-            enlace_invitacion=enlace_unico
+            solo_por_invitacion=solo_por_invitacion
         )
+
+        # ✅ Generar siempre el enlace para el organizador
+        nuevo_partido.generar_enlace_unico()
+
         db.session.add(nuevo_partido)
         db.session.commit()
 
