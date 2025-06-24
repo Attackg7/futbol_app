@@ -394,7 +394,8 @@
        data-bs-toggle="tooltip" title="Mi perfil">
         <img src="{{ url_for('static', filename='profile_pics/' ~ current_user.foto_perfil) }}"
              alt="Perfil" class="nav-profile-img" width="30" height="30">
-        <span class="ms-2 text-white">{{ current_user.username }}</span>
+        <span class="ms-2 text-white">{{ current_user.username.split(' ')[0] ~ ' ' ~ current_user.username.split(' ')[1] if current_user.username.split(' ')|length > 1 else current_user.username }}
+</span>
     </a>
 </li>
                     <li class="nav-item dropdown me-2 notification-icon" data-bs-toggle="tooltip" title="Notificaciones">
@@ -497,8 +498,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Activar tooltips de Bootstrap
 document.addEventListener("DOMContentLoaded", function() {
+    // Activar tooltips de Bootstrap
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.forEach(function (tooltipTriggerEl) {
         new bootstrap.Tooltip(tooltipTriggerEl);
@@ -558,12 +559,35 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
+function mostrarMensajeTemporal(texto, tipo = 'success') {
+    const alerta = document.createElement('div');
+    alerta.className = `alert alert-${tipo} position-fixed top-0 start-50 translate-middle-x mt-3 shadow`;
+    alerta.style.zIndex = 2000;
+    alerta.textContent = texto;
+    document.body.appendChild(alerta);
+    setTimeout(() => alerta.remove(), 2500);
+}
+
+function actualizarContadorNotificaciones(delta) {
+    const badge = document.querySelector('.notification-badge');
+    if (!badge) return;
+    let count = parseInt(badge.textContent);
+    count += delta;
+    if (count <= 0) {
+        badge.remove();
+    } else {
+        badge.textContent = count;
+    }
+}
+
 function enviarSolicitud(event, userId) {
     event.stopPropagation();
     fetch(`/agregar_amigo/${userId}`, { method: 'POST' })
         .then(res => {
             if (res.ok) {
                 document.getElementById(`estado-${userId}`).innerHTML = '<span class="text-secondary">✔ Enviada</span>';
+                mostrarMensajeTemporal('Solicitud enviada');
+                actualizarContadorNotificaciones(1);
             } else {
                 alert("No se pudo enviar la solicitud.");
             }
@@ -575,6 +599,7 @@ function aceptarInvitacion(id) {
         .then(res => res.json())
         .then(data => {
             if (data.success && data.redirect_url) {
+                mostrarMensajeTemporal("Invitación aceptada");
                 window.location.href = data.redirect_url;
             } else {
                 alert(data.error || 'No se pudo aceptar la invitación.');
@@ -587,7 +612,9 @@ function rechazarInvitacion(id) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                document.getElementById(`inv-${id}`).remove();
+                document.getElementById(`inv-${id}`)?.remove();
+                mostrarMensajeTemporal("Invitación rechazada", 'warning');
+                actualizarContadorNotificaciones(-1);
             }
         });
 }
@@ -597,7 +624,9 @@ function aceptarAmistad(id) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                document.getElementById(`sol-${id}`).remove();
+                document.getElementById(`sol-${id}`)?.remove();
+                mostrarMensajeTemporal("¡Solicitud aceptada!");
+                actualizarContadorNotificaciones(-1);
             }
         });
 }
@@ -607,11 +636,14 @@ function rechazarAmistad(id) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                document.getElementById(`sol-${id}`).remove();
+                document.getElementById(`sol-${id}`)?.remove();
+                mostrarMensajeTemporal("Solicitud rechazada", 'warning');
+                actualizarContadorNotificaciones(-1);
             }
         });
 }
 </script>
+
 
 </body>
 </html>

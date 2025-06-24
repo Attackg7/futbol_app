@@ -52,7 +52,9 @@ def load_user(user_id):
 # Página principal
 
 
-
+def send_email(to, subject, body):
+    msg = Message(subject, recipients=[to], body=body, sender="tu_correo@example.com")
+    mail.send(msg)
 
 from datetime import datetime
 @app.route('/', methods=['GET', 'POST'])
@@ -68,9 +70,13 @@ def inicio():
         if mode == 'login':
             user = User.query.filter_by(email=email).first()
             if user and check_password_hash(user.password, password):
-                login_user(user)
-                return redirect(next_page or url_for('index'))
-            error = "Usuario o contraseña incorrectos"
+                if not user.email_confirmado:
+                    error = "Debes confirmar tu correo antes de iniciar sesión."
+                else:
+                    login_user(user)
+                    return redirect(next_page or url_for('index'))
+            else:
+                 error = "Usuario o contraseña incorrectos"
 
         elif mode == 'register':
             nombre = request.form.get('nombre')
@@ -102,6 +108,13 @@ def inicio():
                     telefono=telefono
                 )
                 db.session.add(nuevo_usuario)
+                token = secrets.token_urlsafe(32)
+                nuevo_usuario.token_confirmacion = token
+
+                # Enviar correo (ejemplo muy simple)
+                confirm_url = url_for('confirmar_email', token=token, _external=True)
+                mensaje = f"Hola {nombre}, confirma tu cuenta haciendo clic en el siguiente enlace:\n{confirm_url}"
+                send_email(email, "Confirma tu cuenta", mensaje)  # Asegúrate de tener esta función
                 db.session.commit()
                 flash("Cuenta creada exitosamente. Ahora puedes iniciar sesión.", "success")
                 return redirect(url_for('inicio'))
@@ -115,7 +128,8 @@ def inicio():
                 return redirect(url_for('inicio'))
             error = "Usuario no encontrado"
 
-    return render_template("inicio.html", now=datetime.now())
+    return render_template("inicio.html", error=error, now=datetime.now())
+
 
 
 @app.before_request
@@ -584,21 +598,19 @@ from sqlalchemy import func
 @login_required
 def perfil_usuario(user_id):
     usuario = User.query.get_or_404(user_id)
-    calificaciones = list(usuario.calificaciones_recibidas)
 
-    # ✅ Filtrar inscripciones a partidos válidos (no fallidos)
+    es_mismo_usuario = current_user.id == usuario.id
+    es_amigo = usuario in current_user.obtener_amigos()
+    puede_ver_info = es_mismo_usuario or es_amigo
+
+    calificaciones = list(usuario.calificaciones_recibidas) if puede_ver_info else []
     inscripciones = [
         ins for ins in usuario.inscripciones
         if ins.partido and ins.partido.resultado is not None and not ins.partido.cancelado
-    ]
+    ] if puede_ver_info else []
 
-    # Mostrar solicitudes solo si es el propio usuario
-    solicitudes = Amistad.query.filter_by(amigo_id=usuario.id, confirmada=False).all() if current_user.id == user_id else []
-
-    # ✅ Invitaciones a partidos solo si es el propio perfil
-    invitaciones = Invitacion.query.filter_by(usuario_id=usuario.id).all() if current_user.id == user_id else []
-
-    all_users = User.query.all()
+    solicitudes = Amistad.query.filter_by(amigo_id=usuario.id, confirmada=False).all() if es_mismo_usuario else []
+    invitaciones = Invitacion.query.filter_by(usuario_id=usuario.id).all() if es_mismo_usuario else []
 
     return render_template(
         'perfil_usuario.html',
@@ -606,8 +618,8 @@ def perfil_usuario(user_id):
         calificaciones=calificaciones,
         inscripciones=inscripciones,
         solicitudes=solicitudes,
-        all_users=all_users,
-        invitaciones=invitaciones
+        invitaciones=invitaciones,
+        puede_ver_info=puede_ver_info  # <-- clave para la plantilla
     )
 
 
@@ -767,7 +779,8 @@ def register():
                 ciudad=form.get('ciudad'),
                 telefono=form.get('telefono'),
                 token_confirmacion=token,
-                email_confirmado=False
+                email_confirmado=False,
+                foto_perfil='default.jpg'
             )
             db.session.add(nuevo)
             db.session.commit()
@@ -835,7 +848,10 @@ def confirmar_email(token):
 @login_required
 def agregar_amigo(user_id):
     if user_id == current_user.id:
-        flash("No puedes enviarte solicitud a ti mismo.")
+        msg = "No puedes enviarte solicitud a ti mismo."
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify(success=False, error=msg), 400
+        flash(msg)
         return redirect(url_for('perfil_usuario', user_id=user_id))
 
     # Verificar si ya existe una amistad (en cualquier dirección)
@@ -845,15 +861,19 @@ def agregar_amigo(user_id):
     ).first()
 
     if existe:
-        flash("Ya existe una solicitud o ya son amigos.")
+        msg = "Ya existe una solicitud o ya son amigos."
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify(success=False, error=msg), 400
+        flash(msg)
     else:
         nueva = Amistad(usuario_id=current_user.id, amigo_id=user_id, confirmada=False)
         db.session.add(nueva)
         db.session.commit()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify(success=True)
         flash("Solicitud enviada.")
 
     return redirect(url_for('perfil_usuario', user_id=user_id))
-
 
 
 # Ruta para aceptar amistad
@@ -1079,6 +1099,33 @@ def unirse_por_enlace(enlace_invitacion):
 
     # ✅ Redirige al formulario de inscripción normal
     return redirect(url_for('unirse_partido', partido_id=partido.id))
+
+
+@app.route('/cancelar_solicitud/<int:user_id>', methods=['POST'])
+@login_required
+def cancelar_solicitud(user_id):
+    solicitud = Amistad.query.filter_by(usuario_id=current_user.id, amigo_id=user_id, confirmada=False).first()
+
+    if solicitud:
+        db.session.delete(solicitud)
+        db.session.commit()
+        msg = "Solicitud cancelada."
+        success = True
+    else:
+        msg = "No se encontró ninguna solicitud pendiente para cancelar."
+        success = False
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify(success=success, message=msg), (200 if success else 404)
+
+    if success:
+        flash(msg, 'success')
+    else:
+        flash(msg, 'warning')
+
+    return redirect(url_for('perfil_usuario', user_id=user_id))
+
+
 @app.route('/ajax/aceptar_invitacion/<int:invitacion_id>', methods=['POST'])
 @login_required
 def ajax_aceptar_invitacion(invitacion_id):

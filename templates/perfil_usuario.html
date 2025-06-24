@@ -42,11 +42,48 @@
 {% set total_calificaciones = calificaciones | length %}
 
 <div class="container py-4">
+    <!-- Restriction messages moved outside the card -->
+    {% if not puede_ver_info %}
+    <div class="alert alert-warning text-center mb-4">
+        Este perfil es privado. Solo los amigos pueden ver la información.
+    </div>
+
+    {% if current_user.id != usuario.id %}
+  {% set ya_enviada = solicitudes|selectattr('usuario_id', 'equalto', current_user.id)|list|length > 0 %}
+  {% set ya_son_amigos = usuario in current_user.obtener_amigos() %}
+  <div id="amistad-container" class="text-center mb-4">
+    {% if ya_son_amigos %}
+      <button class="btn btn-success" disabled>Ya son amigos</button>
+    {% elif ya_enviada %}
+      <div class="alert alert-success">La solicitud fue enviada.</div>
+      <form id="form-cancelar" action="{{ url_for('cancelar_solicitud', user_id=usuario.id) }}" method="post">
+        <button class="btn btn-outline-danger" type="submit">Cancelar solicitud</button>
+      </form>
+    {% else %}
+      <form id="form-amistad" action="{{ url_for('agregar_amigo', user_id=usuario.id) }}" method="post">
+        <button type="submit" class="btn btn-primary">Enviar solicitud de amistad</button>
+      </form>
+    {% endif %}
+  </div>
+{% endif %}
+
+    {% endif %}
+
+    <!-- Profile card -->
     <div class="fifa-card-fut position-relative text-center mx-auto mb-4">
         <div class="fut-rating">{{ '{:.1f}'.format(promedio_redondeado).rstrip('0').rstrip('.') }}</div>
-        <div class="fut-username">{{ usuario.username }}</div>
+        <div class="fut-username">
+  {{ usuario.username.split()[:2] | join(' ') }}
+</div>
+<div class="fut-country">
+  <img src="{{ url_for('static', filename='images/flags/' ~ usuario.pais ~ '.png') }}" 
+       alt="{{ usuario.pais }}" title="{{ usuario.pais }}" class="flag-icon">
+</div>
 
-        <img class="fut-photo" id="foto-perfil" src="{{ url_for('static', filename='profile_pics/' ~ usuario.foto_perfil) }}" alt="Foto">
+        <img class="fut-photo" id="foto-perfil"
+     src="{{ url_for('static', filename=('images/default.jpg' if usuario.foto_perfil == 'default.jpg' else 'profile_pics/' ~ usuario.foto_perfil)) }}"
+     alt="Foto de perfil">
+     
 
         {% if current_user.id == usuario.id %}
         <label for="foto_input" class="fut-edit-icon" title="Cambiar foto">
@@ -71,8 +108,6 @@
             {% endfor %}
         </div>
 
-        
-
         <div class="text-muted mt-2">
             <i class="fa-solid fa-users"></i> {{ total_calificaciones }} calificación{{ total_calificaciones != 1 and 'es' or '' }} recibid{{ total_calificaciones != 1 and 'as' or 'a' }}
         </div>
@@ -85,6 +120,9 @@
 
         <div id="mensaje" class="alert alert-success d-none mt-2">Foto actualizada</div>
     </div>
+
+    <!-- Only show profile content if user can view it -->
+    {% if puede_ver_info %}
     <!-- Solicitudes -->
     {% if current_user.id == usuario.id %}
     <div class="mb-4">
@@ -210,38 +248,39 @@
     </div>
 
     <!-- Partidos participados -->
-<div class="mb-4">
-    <h4>Partidos en los que ha participado</h4>
-    {% set participaciones_validas = [] %}
-{% for inscripcion in inscripciones %}
-    {% if inscripcion.partido and inscripcion.partido.cerrado %}
-        {% set _ = participaciones_validas.append(inscripcion) %}
+    <div class="mb-4">
+        <h4>Partidos en los que ha participado</h4>
+        {% set participaciones_validas = [] %}
+        {% for inscripcion in inscripciones %}
+            {% if inscripcion.partido and inscripcion.partido.cerrado %}
+                {% set _ = participaciones_validas.append(inscripcion) %}
+            {% endif %}
+        {% endfor %}
+        {% if participaciones_validas %}
+            <ul class="list-group">
+                {% for inscripcion in inscripciones if inscripcion.partido.cerrado or inscripcion.partido.resultado %}
+                <li class="list-group-item">
+                    <strong>{{ inscripcion.partido.equipo1 }} vs {{ inscripcion.partido.equipo2 }}</strong><br>
+                    Fecha: {{ inscripcion.partido.fecha_hora.strftime('%d/%m/%Y') }}<br>
+                    Lugar: {{ inscripcion.partido.lugar }}<br>
+                    Resultado:
+                    {% if inscripcion.partido.resultado %}
+                        {{ inscripcion.partido.resultado }}
+                    {% elif inscripcion.partido.cerrado %}
+                        Partido cerrado sin resultado
+                    {% else %}
+                        Aún no registrado
+                    {% endif %}<br>
+                    Equipo: {{ inscripcion.equipo }}<br>
+                    <a href="{{ url_for('detalle_partido', partido_id=inscripcion.partido.id) }}" class="btn btn-link btn-sm">Ver detalles</a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No has participado en ningún partido válido aún.</p>
+        {% endif %}
+    </div>
     {% endif %}
-{% endfor %}
-    {% if participaciones_validas %}
-        <ul class="list-group">
-            {% for inscripcion in inscripciones if inscripcion.partido.cerrado or inscripcion.partido.resultado %}
-            <li class="list-group-item">
-                <strong>{{ inscripcion.partido.equipo1 }} vs {{ inscripcion.partido.equipo2 }}</strong><br>
-                Fecha: {{ inscripcion.partido.fecha_hora.strftime('%d/%m/%Y') }}<br>
-                Lugar: {{ inscripcion.partido.lugar }}<br>
-                Resultado:
-                {% if inscripcion.partido.resultado %}
-                    {{ inscripcion.partido.resultado }}
-                {% elif inscripcion.partido.cerrado %}
-                    Partido cerrado sin resultado
-                {% else %}
-                    Aún no registrado
-                {% endif %}<br>
-                Equipo: {{ inscripcion.equipo }}<br>
-                <a href="{{ url_for('detalle_partido', partido_id=inscripcion.partido.id) }}" class="btn btn-link btn-sm">Ver detalles</a>
-            </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p class="text-muted">No has participado en ningún partido válido aún.</p>
-    {% endif %}
-</div>
 
     <div class="text-center">
         <a href="{{ url_for('index') }}" class="btn btn-outline-primary">Volver al inicio</a>
@@ -251,6 +290,19 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap');
 
+.fut-country {
+    position: absolute;
+    top: 50px;
+    right: 15px;
+}
+
+.flag-icon {
+    width: 30px;
+    height: 20px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    box-shadow: 0 0 3px rgba(0,0,0,0.3);
+}
 .fifa-card-fut {
     width: 300px;
     aspect-ratio: 5 / 7;
@@ -386,5 +438,68 @@ input.addEventListener('change', () => {
     })
     .catch(err => console.error('Error de red:', err));
 });
+</script>
+<script>
+function renderBotonAgregar() {
+  const contenedor = document.getElementById('amistad-container');
+  contenedor.innerHTML = `
+    <form id="form-amistad" action="{{ url_for('agregar_amigo', user_id=usuario.id) }}" method="post">
+      <button type="submit" class="btn btn-primary">Enviar solicitud de amistad</button>
+    </form>
+  `;
+  setupFormAmistad();  // Reasignar evento
+}
+
+function renderBotonCancelar() {
+  const contenedor = document.getElementById('amistad-container');
+  contenedor.innerHTML = `
+    <div class="alert alert-success">La solicitud fue enviada.</div>
+    <form id="form-cancelar" action="{{ url_for('cancelar_solicitud', user_id=usuario.id) }}" method="post">
+      <button class="btn btn-outline-danger" type="submit">Cancelar solicitud</button>
+    </form>
+  `;
+  setupFormCancelar();  // Reasignar evento
+}
+
+function setupFormAmistad() {
+  const form = document.getElementById('form-amistad');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const btn = form.querySelector('button');
+      btn.disabled = true;
+      btn.innerText = 'Enviando...';
+
+      fetch(form.action, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(res => res.ok ? renderBotonCancelar() : alert('Error al enviar'))
+      .catch(() => alert('Error de red'));
+    });
+  }
+}
+
+function setupFormCancelar() {
+  const form = document.getElementById('form-cancelar');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const btn = form.querySelector('button');
+      btn.disabled = true;
+      btn.innerText = 'Cancelando...';
+
+      fetch(form.action, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(res => res.ok ? renderBotonAgregar() : alert('Error al cancelar'))
+      .catch(() => alert('Error de red'));
+    });
+  }
+}
+
+// Inicializar
+setupFormAmistad();
 </script>
 {% endblock %}

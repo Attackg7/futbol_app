@@ -128,19 +128,21 @@
       </div>
 
       <div class="col-lg-5 d-flex justify-content-center" data-aos="fade-left">
-        <div class="floating-login">
-          <h4 class="mb-3 text-center text-success" id="form-title">Iniciar Sesión</h4>
+  <div class="floating-login">
+    <h4 class="mb-3 text-center text-success" id="form-title">Iniciar Sesión</h4>
 
-          {% if error %}
-            <div class="alert alert-danger text-center py-2 mb-3">{{ error }}</div>
-          {% endif %}
-          {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-              {% for category, message in messages %}
-                <div class="alert alert-{{ category }} text-center py-2 mb-3">{{ message }}</div>
-              {% endfor %}
-            {% endif %}
-          {% endwith %}
+    <!-- ✅ Mensajes flash y errores -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} text-center py-2 mb-3">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if error %}
+      <div class="alert alert-danger text-center py-2 mb-3">{{ error }}</div>
+    {% endif %}
 
           <form method="POST" id="auth-form" class="auth-transition active">
             <input type="hidden" name="mode" id="mode" value="login">

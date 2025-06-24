@@ -88,6 +88,7 @@ class Partido(db.Model):
     solo_por_invitacion = db.Column(db.Boolean, default=False)
     enlace_invitacion = db.Column(db.String(100), unique=True, nullable=True)  # ✅ Link público
     cancelado = db.Column(db.Boolean, default=False)
+    foto_perfil = db.Column(db.String(120), nullable=False, default='default.jpg')
     latitud = db.Column(db.Float)
     longitud = db.Column(db.Float)
 
