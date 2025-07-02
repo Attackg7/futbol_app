@@ -363,13 +363,13 @@
         {% endif %}
 
         {# ✅ Capitanes de VS pueden invitar jugadores #}
-        {% if es_vs and partido.vs %}
-            {% if current_user.id in [partido.vs.capitan_equipo1_id, partido.vs.capitan_equipo2_id] %}
-                <a href="{{ url_for('invitar_vs', partido_id=partido.id) }}" class="btn btn-outline-success mt-3">
-                    <i class="bi bi-person-plus"></i> Invitar jugadores a mi equipo
-                </a>
-            {% endif %}
-        {% endif %}
+        {% if es_vs and partido.partido_vs %}
+    {% if current_user.id in [partido.partido_vs.capitan_equipo1_id, partido.partido_vs.capitan_equipo2_id] %}
+        <a href="{{ url_for('invitar_vs', partido_id=partido.id) }}" class="btn btn-outline-success mt-3">
+            <i class="bi bi-person-plus"></i> Invitar jugadores a mi equipo
+        </a>
+    {% endif %}
+{% endif %}
 
     {% endif %}
 

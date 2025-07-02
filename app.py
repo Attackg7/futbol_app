@@ -1014,18 +1014,27 @@ def buscar_usuarios():
     if not query or not partido_id:
         return jsonify([])
 
-    usuarios = User.query.filter(User.username.ilike(f'%{query}%'), User.id != current_user.id).limit(10).all()
+    usuarios = User.query.filter(
+        User.username.ilike(f'%{query}%'),
+        User.id != current_user.id
+    ).limit(10).all()
 
-    invitaciones = Invitacion.query.filter_by(partido_id=partido_id).all()
-    invitados_ids = {inv.usuario_id for inv in invitaciones}
+    partido = Partido.query.get(partido_id)
+    if not partido:
+        return jsonify([])
+
+    # Usuarios ya invitados o inscritos
+    inscritos_ids = {i.user_id for i in partido.inscripciones}
+    invitados_vs_ids = {i.invitado_id for i in partido.invitaciones_vs}
 
     resultados = []
     for u in usuarios:
+        ya_invitado = u.id in invitados_vs_ids or u.id in inscritos_ids
         resultados.append({
             'id': u.id,
             'username': u.username,
             'foto': u.foto_perfil or 'default.jpg',
-            'ya_invitado': u.id in invitados_ids
+            'ya_invitado': ya_invitado
         })
 
     return jsonify(resultados)
@@ -1330,7 +1339,7 @@ def limpiar_vs_huerfanos():
 @login_required
 def invitar_vs(partido_id):
     partido = Partido.query.get_or_404(partido_id)
-    vs = partido.vs
+    vs = partido.partido_vs  # Asegúrate de que el atributo se llama así en tu modelo
 
     if not vs:
         abort(400, "No es un partido VS")
@@ -1342,13 +1351,26 @@ def invitar_vs(partido_id):
     else:
         abort(403, "No eres capitán en este partido")
 
-    # Excluir usuarios ya inscritos o invitados
     ya_ocupados = set(
         [i.user_id for i in partido.inscripciones] +
         [i.invitado_id for i in partido.invitaciones_vs]
     )
 
-    amigos_disponibles = [amigo for amigo in current_user.obtener_amigos() if amigo.id not in ya_ocupados]
+    amigos_disponibles = [
+        amigo for amigo in current_user.obtener_amigos()
+        if amigo.id not in ya_ocupados
+    ]
+
+    termino_busqueda = request.args.get('buscar', '').strip()
+    resultados_busqueda = []
+    if termino_busqueda:
+        resultados_busqueda = User.query.filter(
+            (User.username.ilike(f"%{termino_busqueda}%")) |
+            (User.nombre.ilike(f"%{termino_busqueda}%"))
+        ).filter(
+            User.id != current_user.id,
+            ~User.id.in_(ya_ocupados)
+        ).all()
 
     if request.method == 'POST':
         seleccionados = request.form.getlist('invitados')
@@ -1364,8 +1386,13 @@ def invitar_vs(partido_id):
         flash("Invitaciones enviadas", "success")
         return redirect(url_for('detalle_partido', partido_id=partido.id))
 
-    return render_template('invitar_vs.html', partido=partido, equipo=equipo, amigos=amigos_disponibles)
-
+    return render_template(
+        'invitar_vs.html',
+        partido=partido,
+        equipo=equipo,
+        amigos=amigos_disponibles,
+        resultados_busqueda=resultados_busqueda
+    )
 
 @app.route('/aceptar_invitacion_vs/<int:invitacion_id>', methods=['POST'])
 @login_required

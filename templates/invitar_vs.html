@@ -3,9 +3,21 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h3 class="mb-4">Invitar amigos a tu equipo: {{ equipo }}</h3>
+    <h3 class="mb-4">Invitar jugadores a tu equipo: {{ equipo }}</h3>
 
+    <!-- Búsqueda interactiva -->
+    <div class="mb-4">
+        <input type="text" id="input-busqueda" class="form-control" placeholder="Buscar jugadores por nombre o usuario...">
+    </div>
+
+    <div id="resultados-busqueda" class="mb-4"></div>
+
+    <hr>
+
+    <!-- Invitación de amigos -->
     <form method="POST">
+        <h5>Tus amigos disponibles</h5>
+        {% if amigos %}
         <div class="row row-cols-2 row-cols-md-3 g-3">
             {% for amigo in amigos %}
             <div class="form-check">
@@ -20,6 +32,67 @@
         <div class="mt-4">
             <button class="btn btn-success">Enviar invitaciones</button>
         </div>
+        {% else %}
+        <p class="text-muted">No tienes amigos disponibles para invitar.</p>
+        {% endif %}
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const inputBusqueda = document.getElementById('input-busqueda');
+    const resultadosDiv = document.getElementById('resultados-busqueda');
+    const partidoId = parseInt("{{ partido.id }}");
+
+    inputBusqueda.addEventListener('input', () => {
+        const termino = inputBusqueda.value.trim();
+        if (termino.length === 0) {
+            resultadosDiv.innerHTML = '';
+            return;
+        }
+
+        fetch(`/buscar_usuarios?query=${encodeURIComponent(termino)}&partido_id=${partidoId}`)
+            .then(response => response.json())
+            .then(data => {
+                resultadosDiv.innerHTML = '';
+
+                if (data.length === 0) {
+                    resultadosDiv.innerHTML = '<p class="text-muted">No se encontraron jugadores.</p>';
+                    return;
+                }
+
+                data.forEach(usuario => {
+                    const div = document.createElement('div');
+                    div.classList.add('d-flex', 'align-items-center', 'mb-2');
+
+                    let contenido = `
+                        <img src="/static/profile_pics/${usuario.foto}" width="30" class="rounded-circle me-2">
+                        <span class="me-auto">${usuario.username}</span>
+                    `;
+
+                    if (!usuario.ya_invitado) {
+                        contenido += `
+                            <form method="POST" action="/invitar_vs/${partidoId}" class="d-inline ms-2">
+                                <input type="hidden" name="invitados" value="${usuario.id}">
+                                <button class="btn btn-sm btn-success">Invitar</button>
+                            </form>
+                        `;
+                    } else {
+                        contenido += `
+                            <span class="badge bg-secondary ms-2">Invitación enviada</span>
+                        `;
+                    }
+
+                    div.innerHTML = contenido;
+                    resultadosDiv.appendChild(div);
+                });
+            })
+            .catch(err => {
+                console.error('Error en búsqueda:', err);
+                resultadosDiv.innerHTML = '<p class="text-danger">Error al buscar jugadores.</p>';
+            });
+    });
+});
+</script>
+
 {% endblock %}
