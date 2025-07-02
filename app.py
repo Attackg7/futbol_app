@@ -954,12 +954,8 @@ def aceptar_invitacion(invitacion_id):
         flash("Ya estás inscrito en este partido.")
         return redirect(url_for('detalle_partido', partido_id=partido.id))
 
-    # Elimina la invitación (se acepta)
-    db.session.delete(invitacion)
-    db.session.commit()
-
-    # Redirige al formulario para elegir equipo
-    return redirect(url_for('unirse_partido', partido_id=partido.id))
+    # Redirige al formulario de inscripción, pasando el id de invitación
+    return redirect(url_for('unirse_partido', partido_id=partido.id, invitacion_id=invitacion.id))
 
 
 @app.route('/partido/<int:partido_id>/buscar_usuarios')
