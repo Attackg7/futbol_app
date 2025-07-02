@@ -16,6 +16,23 @@
 
 
    <style>
+    .fade-in {
+    animation: fadeIn 0.3s ease-in forwards;
+}
+
+.fade-out {
+    animation: fadeOut 1s ease-in forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to   { opacity: 0; transform: scale(0.9); }
+}
     body {
         background: linear-gradient(to bottom right, #e6f4ea, #ffffff); /* verde muy claro a blanco */
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -398,66 +415,94 @@
 </span>
     </a>
 </li>
-                    <li class="nav-item dropdown me-2 notification-icon" data-bs-toggle="tooltip" title="Notificaciones">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-bell"></i>
-                            {% if solicitudes_count + invitaciones_count > 0 %}
-                                <span class="notification-badge">{{ solicitudes_count + invitaciones_count }}</span>
-                            {% endif %}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end p-3" style="min-width: 360px;" id="notification-menu">
-    <div class="notificaciones-container">
-        <!-- Partidos -->
-        <div class="notificacion-seccion mb-3">
-            <h6 class="text-warning fw-bold mb-2">Partidos</h6>
-            {% for inv in current_user.invitaciones_recibidas %}
-                {% if not inv.partido.cerrado %}
-                <li id="inv-{{ inv.id }}" class="notification-item border rounded p-2 mb-2 d-flex">
-                    <div class="me-2">
-                        <i class="bi bi-calendar2-event-fill text-warning fs-4"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="small text-muted">Invitación a partido en</div>
-                        <div class="fw-semibold">{{ inv.partido.lugar }}</div>
-                        <div class="text-muted small">{{ inv.partido.fecha_hora.strftime('%d/%m %H:%M') }}</div>
-                        <div class="mt-2">
-                            <button class="btn btn-sm btn-outline-success me-1" onclick="aceptarInvitacion('{{ inv.id }}')">Aceptar</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="rechazarInvitacion('{{ inv.id }}')">Rechazar</button>
-                        </div>
-                    </div>
-                </li>
-                {% endif %}
-            {% endfor %}
-        </div>
+   <li class="nav-item dropdown me-2 notification-icon" data-bs-toggle="tooltip" title="Notificaciones">
+    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+        <i class="bi bi-bell"></i>
+        {% if solicitudes_count + invitaciones_count > 0 %}
+            <span class="notification-badge">{{ solicitudes_count + invitaciones_count }}</span>
+        {% endif %}
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end p-3" style="min-width: 360px; max-height: 400px; overflow-y: auto;" id="notification-menu">
+        <div class="notificaciones-container flex-column w-100">
 
-        <!-- Amigos -->
-        <div class="notificacion-seccion">
-            <h6 class="text-success fw-bold mb-2">Amigos</h6>
-            {% for solicitud in current_user.amistades_recibidas %}
-                {% if not solicitud.confirmada %}
-                <li id="sol-{{ solicitud.id }}" class="notification-item border rounded p-2 mb-2 d-flex">
-                    <div class="me-2">
-                        <i class="bi bi-person-plus-fill text-success fs-4"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="small text-muted">Solicitud de amistad</div>
-                        <div class="fw-semibold">{{ solicitud.usuario.username }}</div>
-                        <div class="mt-2">
-                            <button class="btn btn-sm btn-outline-success me-1" onclick="aceptarAmistad('{{ solicitud.id }}')">Aceptar</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="rechazarAmistad('{{ solicitud.id }}')">Rechazar</button>
+            <!-- 🔔 SECCIÓN: PARTIDOS -->
+            <div class="notificacion-seccion mb-3">
+                <h6 class="text-warning fw-bold mb-2">Partidos</h6>
+
+                <!-- 🟡 Invitaciones modo LIBRE -->
+                {% for inv in current_user.invitaciones_recibidas %}
+                    {% if not inv.partido.cerrado %}
+                    <li id="inv-{{ inv.id }}" class="notification-item list-unstyled border rounded p-2 mb-2 d-flex">
+                        <div class="me-2">
+                            <i class="bi bi-calendar2-event-fill text-warning fs-4"></i>
                         </div>
-                    </div>
-                </li>
-                {% endif %}
-            {% endfor %}
+                        <div class="flex-grow-1">
+                            <div class="small text-muted">Invitación a partido en</div>
+                            <div class="fw-semibold">{{ inv.partido.lugar }}</div>
+                            <div class="text-muted small">{{ inv.partido.fecha_hora.strftime('%d/%m %H:%M') }}</div>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-success me-1" onclick="aceptarInvitacion('{{ inv.id }}', true)">Aceptar</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="rechazarInvitacion('{{ inv.id }}', true)">Rechazar</button>
+                            </div>
+                        </div>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- 🔴 Invitaciones modo VS -->
+                {% for inv in current_user.invitaciones_vs_recibidas %}
+                    {% if not inv.partido.cerrado %}
+                    <li id="inv-vs-{{ inv.id }}" class="notification-item list-unstyled border rounded p-2 mb-2 d-flex">
+                        <div class="me-2">
+                            <i class="bi bi-person-lines-fill text-danger fs-4"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="small text-muted">Invitación modo VS - Equipo {{ inv.equipo }}</div>
+                            <div class="fw-semibold">{{ inv.partido.lugar }}</div>
+                            <div class="text-muted small">{{ inv.partido.fecha_hora.strftime('%d/%m %H:%M') }}</div>
+                            <div class="text-muted small">Invitado por: <strong>{{ inv.capitan.username }}</strong></div>
+                            <div class="mt-2 d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-success" onclick="aceptarInvitacionVS('{{ inv.id }}')">Aceptar</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="rechazarInvitacionVS('{{ inv.id }}')">Rechazar</button>
+                            </div>
+                        </div>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- 🟢 SECCIÓN: AMIGOS -->
+            <div class="notificacion-seccion">
+                <h6 class="text-success fw-bold mb-2">Amigos</h6>
+                {% for solicitud in current_user.amistades_recibidas %}
+                    {% if not solicitud.confirmada %}
+                    <li id="sol-{{ solicitud.id }}" class="notification-item list-unstyled border rounded p-2 mb-2 d-flex">
+                        <div class="me-2">
+                            <i class="bi bi-person-plus-fill text-success fs-4"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="small text-muted">Solicitud de amistad</div>
+                            <div class="fw-semibold">{{ solicitud.usuario.username }}</div>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-success me-1" onclick="aceptarAmistad('{{ solicitud.id }}')">Aceptar</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="rechazarAmistad('{{ solicitud.id }}')">Rechazar</button>
+                            </div>
+                        </div>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
         </div>
-    </div>
-</ul>
+    </ul>
+</li>
+
+
                     </li>
                     <li class="nav-item" data-bs-toggle="tooltip" title="Crear partido">
-    <a class="nav-link {% if request.endpoint == 'crear_partido' %}nav-active{% endif %}" href="{{ url_for('crear_partido') }}">
-        <i class="bi bi-plus-circle"></i>
-    </a>
+    <a class="nav-link {% if request.endpoint == 'modo_juego' %}nav-active{% endif %}" href="{{ url_for('modo_juego') }}">
+    <i class="bi bi-plus-circle"></i>
+</a>
 </li>
 
 <li class="nav-item" data-bs-toggle="tooltip" title="Eventos">
@@ -624,8 +669,7 @@ function aceptarAmistad(id) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                document.getElementById(`sol-${id}`)?.remove();
-                mostrarMensajeTemporal("¡Solicitud aceptada!");
+                mostrarMensajeLocal(`sol-${id}`, "🤝 ¡Ahora son amigos!");
                 actualizarContadorNotificaciones(-1);
             }
         });
@@ -636,12 +680,60 @@ function rechazarAmistad(id) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                document.getElementById(`sol-${id}`)?.remove();
-                mostrarMensajeTemporal("Solicitud rechazada", 'warning');
+                mostrarMensajeLocal(`sol-${id}`, "❌ Solicitud rechazada", 'warning');
                 actualizarContadorNotificaciones(-1);
             }
         });
 }
+
+function mostrarMensajeLocal(id, texto, tipo = 'success') {
+    const elem = document.getElementById(id);
+    if (!elem) return;
+
+    // Reemplaza el contenido con mensaje temporal
+    elem.innerHTML = `<div class="alert alert-${tipo} mb-0 w-100 text-center py-2">${texto}</div>`;
+    elem.classList.add('fade-in');
+
+    // Después de 8 segundos, desvanecer
+    setTimeout(() => {
+        elem.classList.remove('fade-in');
+        elem.classList.add('fade-out');
+    }, 8000);
+
+    // Después de 10 segundos, eliminar del DOM
+    setTimeout(() => {
+        elem.remove();
+    }, 10000);
+}
+
+
+function aceptarInvitacionVS(id) {
+    // Ejecuta AJAX como antes
+    fetch(`/ajax/aceptar_invitacion_vs/${id}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // 🔁 Mostrar mensaje y aplicar fade
+                mostrarMensajeLocal(`inv-vs-${id}`, "✅ Te uniste al equipo");
+                actualizarContadorNotificaciones(-1);
+
+                // ✅ Redirigir sin esperar
+                window.open(data.redirect_url, '_self');
+            } else {
+                mostrarMensajeLocal(`inv-vs-${id}`, data.error || "❌ Error al aceptar", 'danger');
+            }
+        });
+}
+
+// Evita que el dropdown se cierre al hacer clic en los botones internos
+document.addEventListener('DOMContentLoaded', function () {
+    const menu = document.getElementById('notification-menu');
+    if (menu) {
+        menu.addEventListener('click', function (e) {
+            e.stopPropagation();  // ⚠️ evita que Bootstrap cierre el dropdown
+        });
+    }
+});
 </script>
 
 

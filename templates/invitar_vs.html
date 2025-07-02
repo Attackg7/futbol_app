@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Invitar jugadores{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h3 class="mb-4">Invitar amigos a tu equipo: {{ equipo }}</h3>
+
+    <form method="POST">
+        <div class="row row-cols-2 row-cols-md-3 g-3">
+            {% for amigo in amigos %}
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="invitados" value="{{ amigo.id }}" id="amigo{{ amigo.id }}">
+                <label class="form-check-label" for="amigo{{ amigo.id }}">
+                    <img src="{{ url_for('static', filename='profile_pics/' ~ amigo.foto_perfil) }}" width="30" class="rounded-circle me-2">
+                    {{ amigo.username }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-4">
+            <button class="btn btn-success">Enviar invitaciones</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

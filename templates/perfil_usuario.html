@@ -70,57 +70,69 @@
     {% endif %}
 
     <!-- Profile card -->
-    <div class="fifa-card-fut position-relative text-center mx-auto mb-4">
-        <div class="fut-rating">{{ '{:.1f}'.format(promedio_redondeado).rstrip('0').rstrip('.') }}</div>
-        <div class="fut-username">
-  {{ usuario.username.split()[:2] | join(' ') }}
-</div>
-<div class="fut-country">
-  <img src="{{ url_for('static', filename='images/flags/' ~ usuario.pais ~ '.png') }}" 
-       alt="{{ usuario.pais }}" title="{{ usuario.pais }}" class="flag-icon">
-</div>
-
-        <img class="fut-photo" id="foto-perfil"
-     src="{{ url_for('static', filename=('images/default.jpg' if usuario.foto_perfil == 'default.jpg' else 'profile_pics/' ~ usuario.foto_perfil)) }}"
-     alt="Foto de perfil">
-     
-
-        {% if current_user.id == usuario.id %}
-        <label for="foto_input" class="fut-edit-icon" title="Cambiar foto">
-            <i class="bi bi-camera-fill"></i>
-        </label>
-        <form id="form-foto" action="{{ url_for('subir_foto') }}" method="POST" enctype="multipart/form-data">
-            <input type="file" name="foto_perfil" id="foto_input" accept="image/*" class="d-none">
-        </form>
-        {% endif %}
-
-        <div class="fut-description badge bg-secondary mt-2">{{ descripcion }}</div>
-
-        <div class="fut-stars text-warning">
-            {% for i in range(1, 11) %}
-                {% if promedio_redondeado >= i %}
-                    <i class="fa-solid fa-star"></i>
-                {% elif promedio_redondeado + 0.5 >= i %}
-                    <i class="fa-solid fa-star-half-stroke"></i>
-                {% else %}
-                    <i class="fa-regular fa-star"></i>
-                {% endif %}
-            {% endfor %}
-        </div>
-
-        <div class="text-muted mt-2">
-            <i class="fa-solid fa-users"></i> {{ total_calificaciones }} calificación{{ total_calificaciones != 1 and 'es' or '' }} recibid{{ total_calificaciones != 1 and 'as' or 'a' }}
-        </div>
-
-        <div class="progress mx-auto mt-2" style="max-width: 80%; height: 10px;">
-            <div class="progress-bar bg-success" role="progressbar"
-                 style="width: '{{ (promedio_redondeado * 10) | int }}%';" aria-valuenow="{{ (promedio_redondeado * 10) | int }}"
-                 aria-valuemin="0" aria-valuemax="100"></div>
-        </div>
-
-        <div id="mensaje" class="alert alert-success d-none mt-2">Foto actualizada</div>
+<div class="fifa-card-fut position-relative text-center mx-auto mb-4">
+    
+    <!-- Promedio con mismo color que estrellas -->
+    <div class="fut-rating text-warning">
+        {{ '{:.1f}'.format(promedio_redondeado).rstrip('0').rstrip('.') }}
     </div>
 
+    <!-- Nombre en mismo color -->
+    <div class="fut-username text-warning">
+        {{ usuario.username.split()[:2] | join(' ') }}
+    </div>
+
+    <!-- Bandera -->
+    <div class="fut-country">
+        <img src="{{ url_for('static', filename='images/flags/' ~ usuario.pais ~ '.png') }}" 
+             alt="{{ usuario.pais }}" title="{{ usuario.pais }}" class="flag-icon">
+    </div>
+
+    <!-- Foto de perfil -->
+    <img class="fut-photo" id="foto-perfil"
+         src="{{ url_for('static', filename=('images/default.jpg' if usuario.foto_perfil == 'default.jpg' else 'profile_pics/' ~ usuario.foto_perfil)) }}"
+         alt="Foto de perfil">
+
+    {% if current_user.id == usuario.id %}
+    <label for="foto_input" class="fut-edit-icon" title="Cambiar foto">
+        <i class="bi bi-camera-fill"></i>
+    </label>
+    <form id="form-foto" action="{{ url_for('subir_foto') }}" method="POST" enctype="multipart/form-data">
+        <input type="file" name="foto_perfil" id="foto_input" accept="image/*" class="d-none">
+    </form>
+    {% endif %}
+
+    <!-- Descripción -->
+    <div class="fut-description badge bg-secondary mt-2">{{ descripcion }}</div>
+
+    <!-- Estrellas -->
+    <div class="fut-stars text-warning">
+        {% for i in range(1, 11) %}
+            {% if promedio_redondeado >= i %}
+                <i class="fa-solid fa-star"></i>
+            {% elif promedio_redondeado + 0.5 >= i %}
+                <i class="fa-solid fa-star-half-stroke"></i>
+            {% else %}
+                <i class="fa-regular fa-star"></i>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Total calificaciones -->
+    <div class="text-muted mt-2">
+        <i class="fa-solid fa-users"></i> {{ total_calificaciones }} calificación{{ total_calificaciones != 1 and 'es' or '' }} recibid{{ total_calificaciones != 1 and 'as' or 'a' }}
+    </div>
+
+    <!-- Barra de progreso -->
+    <div class="progress mx-auto mt-2" style="max-width: 80%; height: 10px;">
+        <div class="progress-bar bg-success" role="progressbar"
+             style="width: '{{ (promedio_redondeado * 10) | int }}%';" aria-valuenow="{{ (promedio_redondeado * 10) | int }}"
+             aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+
+    <!-- Mensaje de éxito -->
+    <div id="mensaje" class="alert alert-success d-none mt-2">Foto actualizada</div>
+</div>
     <!-- Only show profile content if user can view it -->
     {% if puede_ver_info %}
     <!-- Solicitudes -->

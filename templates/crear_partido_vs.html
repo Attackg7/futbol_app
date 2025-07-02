@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Crear Partido VS{% endblock %}
+
+{% block content %}
+<div class="container py-5 d-flex justify-content-center">
+    <div class="card shadow-sm p-4 w-100" style="max-width: 700px;">
+        <h3 class="mb-4 text-danger text-center">Crear Partido VS</h3>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div id="alert-auto" class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            {% include "_formulario_partido_base.html" %}
+
+            <!-- Campos exclusivos del modo VS -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label for="capitan_equipo1" class="form-label">Capitán Equipo 1</label>
+                    <select name="capitan_equipo1" id="capitan_equipo1" class="form-select" required>
+                        {% for amigo in amigos %}
+                            <option value="{{ amigo.id }}"
+                                {% if datos_guardados and datos_guardados['capitan_equipo1'] == amigo.id|string %}selected{% endif %}>
+                                {{ amigo.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="capitan_equipo2" class="form-label">Capitán Equipo 2</label>
+                    <select name="capitan_equipo2" id="capitan_equipo2" class="form-select" required>
+                        {% for amigo in amigos %}
+                            <option value="{{ amigo.id }}"
+                                {% if datos_guardados and datos_guardados['capitan_equipo2'] == amigo.id|string %}selected{% endif %}>
+                                {{ amigo.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-danger">Crear Partido VS</button>
+                <a href="{{ url_for('modo_juego') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Ocultar automáticamente los mensajes flash después de 5 segundos
+    setTimeout(() => {
+        const alert = document.getElementById('alert-auto');
+        if (alert) {
+            alert.classList.remove('show');
+            alert.classList.add('fade');
+            setTimeout(() => alert.remove(), 1000); // Removerlo completamente después de animar
+        }
+    }, 5000);
+</script>
+{% endblock %}

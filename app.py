@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, request, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Partido, Inscripcion, Calificacion, Amistad, Invitacion, Notificacion
+from models import db, User, Partido, Inscripcion, Calificacion, Amistad, Invitacion, Notificacion, PartidoVS, InvitacionVS
 import os
 from werkzeug.utils import secure_filename
 import uuid
@@ -146,81 +146,81 @@ def index():
     now = datetime.now()
 
     for partido in partidos:
-        inscripciones = partido.inscripciones
-        count_total = len(inscripciones)
-        total_requerido = partido.max_jugadores * 2
-        porcentaje_actual = count_total / total_requerido if total_requerido > 0 else 0
+        try:
+            inscripciones = partido.inscripciones
+            count_total = len(inscripciones)
+            total_requerido = partido.max_jugadores * 2
+            porcentaje_actual = count_total / total_requerido if total_requerido > 0 else 0
 
-        tiempo_desde_inicio = (now - partido.fecha_hora).total_seconds()
-        ha_empezado = partido.fecha_hora <= now
-        ha_pasado_10_min = tiempo_desde_inicio >= 600
-        ha_pasado_2_horas = tiempo_desde_inicio >= 7200
-        ha_pasado_24_horas = tiempo_desde_inicio >= 86400
+            tiempo_desde_inicio = (now - partido.fecha_hora).total_seconds()
+            ha_empezado = partido.fecha_hora <= now
+            ha_pasado_10_min = tiempo_desde_inicio >= 600
+            ha_pasado_2_horas = tiempo_desde_inicio >= 7200
+            ha_pasado_24_horas = tiempo_desde_inicio >= 86400
 
-        cancelado_por_falta = False
-        es_organizador = current_user.is_authenticated and current_user.id == partido.organizador_id
+            cancelado_por_falta = False
 
-        # ✅ CANCELADO POR FALTA (<70%) Y ELIMINACIÓN A LOS 10 MIN
-        if not partido.cerrado and ha_empezado and porcentaje_actual < 0.7:
-            if ha_pasado_10_min:
+            if not partido.cerrado and ha_empezado and porcentaje_actual < 0.7:
+                if ha_pasado_10_min:
+                    db.session.delete(partido)
+                    db.session.commit()
+                    continue  # ya fue eliminado
+                else:
+                    partido.cancelado = True
+                    cancelado_por_falta = True
+                    db.session.commit()
+
+            if not partido.cerrado and ha_empezado and partido.resultado is None and ha_pasado_24_horas:
+                for inscripcion in partido.inscripciones:
+                    db.session.delete(inscripcion)
                 db.session.delete(partido)
                 db.session.commit()
-                continue  # Partido eliminado, no mostrar
-            else:
-                partido.cancelado = True  # Marcar como cancelado
-                db.session.commit()
-                cancelado_por_falta = True
+                continue
 
-        # ✅ ELIMINACIÓN POR NO TENER RESULTADO A LAS 24 HORAS
-        if not partido.cerrado and ha_empezado and partido.resultado is None and ha_pasado_24_horas:
-            for inscripcion in partido.inscripciones:
-                db.session.delete(inscripcion)
-            db.session.delete(partido)
-            db.session.commit()
-            continue  # Partido eliminado, no mostrar
+            puede_registrar_resultado = (
+                current_user.is_authenticated and
+                current_user.id == partido.organizador_id and
+                not partido.cerrado and
+                partido.resultado is None and
+                ha_pasado_2_horas and
+                porcentaje_actual >= 0.7
+            )
 
-        # Mostrar botón de resultado 2 horas después
-        puede_registrar_resultado = (
-            current_user.is_authenticated and
-            current_user.id == partido.organizador_id and
-            not partido.cerrado and
-            partido.resultado is None and
-            ha_pasado_2_horas and
-            porcentaje_actual >= 0.7
-        )
+            count_equipo1 = sum(1 for i in inscripciones if i.equipo == partido.equipo1)
+            count_equipo2 = sum(1 for i in inscripciones if i.equipo == partido.equipo2)
+            equipo1_lleno = count_equipo1 >= partido.max_jugadores
+            equipo2_lleno = count_equipo2 >= partido.max_jugadores
+            cupo_disponible = not (equipo1_lleno and equipo2_lleno)
 
-        # Conteo por equipos
-        count_equipo1 = sum(1 for i in inscripciones if i.equipo == partido.equipo1)
-        count_equipo2 = sum(1 for i in inscripciones if i.equipo == partido.equipo2)
-        equipo1_lleno = count_equipo1 >= partido.max_jugadores
-        equipo2_lleno = count_equipo2 >= partido.max_jugadores
-        cupo_disponible = not (equipo1_lleno and equipo2_lleno)
+            user_inscrito = False
+            puede_calificar = False
+            if current_user.is_authenticated:
+                user_inscrito = any(i.user_id == current_user.id for i in inscripciones)
+                if user_inscrito and partido.cerrado:
+                    jugadores_a_calificar = [i.user_id for i in inscripciones if i.user_id != current_user.id]
+                    ya_calificados = [
+                        c.evaluado_id for c in partido.calificaciones
+                        if c.evaluador_id == current_user.id
+                    ]
+                    puede_calificar = any(uid not in ya_calificados for uid in jugadores_a_calificar)
 
-        user_inscrito = False
-        puede_calificar = False
-        if current_user.is_authenticated:
-            user_inscrito = any(i.user_id == current_user.id for i in inscripciones)
-            if user_inscrito and partido.cerrado:
-                jugadores_a_calificar = [i.user_id for i in inscripciones if i.user_id != current_user.id]
-                ya_calificados = [
-                    c.evaluado_id for c in partido.calificaciones
-                    if c.evaluador_id == current_user.id
-                ]
-                puede_calificar = any(uid not in ya_calificados for uid in jugadores_a_calificar)
+            datos_partidos.append({
+                'partido': partido,
+                'count_equipo1': count_equipo1,
+                'count_equipo2': count_equipo2,
+                'equipo1_lleno': equipo1_lleno,
+                'equipo2_lleno': equipo2_lleno,
+                'cupo_disponible': cupo_disponible,
+                'user_inscrito': user_inscrito,
+                'puede_calificar': puede_calificar,
+                'cancelado_por_falta': cancelado_por_falta,
+                'porcentaje_inscritos': porcentaje_actual,
+                'puede_registrar_resultado': puede_registrar_resultado
+            })
 
-        datos_partidos.append({
-            'partido': partido,
-            'count_equipo1': count_equipo1,
-            'count_equipo2': count_equipo2,
-            'equipo1_lleno': equipo1_lleno,
-            'equipo2_lleno': equipo2_lleno,
-            'cupo_disponible': cupo_disponible,
-            'user_inscrito': user_inscrito,
-            'puede_calificar': puede_calificar,
-            'cancelado_por_falta': cancelado_por_falta,
-            'porcentaje_inscritos': porcentaje_actual,
-            'puede_registrar_resultado': puede_registrar_resultado
-        })
+        except Exception as e:
+            db.session.rollback()
+            print(f"❌ Error procesando partido ID {partido.id}: {e}")
 
     # Clasificar
     proximos = []
@@ -253,59 +253,6 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Crear nuevo partido (solo si está logueado)
-
-
-
-
-@app.route('/crear', methods=['GET', 'POST'])
-@login_required
-def crear_partido():
-    amigos = current_user.obtener_amigos()
-
-    if request.method == 'POST':
-        fecha_str = request.form['fecha']
-        hora_str = request.form['hora']
-        fecha_hora = datetime.strptime(f"{fecha_str} {hora_str}", "%Y-%m-%d %H:%M")
-        solo_por_invitacion = 'solo_por_invitacion' in request.form
-        
-
-        nuevo_partido = Partido(
-            fecha_hora=fecha_hora,
-            lugar=request.form['lugar'],
-            latitud=float(request.form['latitud']) if request.form['latitud'] else None,
-            longitud=float(request.form['longitud']) if request.form['longitud'] else None,
-            equipo1=request.form['equipo1'],
-            equipo2=request.form['equipo2'],
-            max_jugadores=int(request.form['max_jugadores']),
-            organizador_id=current_user.id,
-            solo_por_invitacion=solo_por_invitacion
-        )
-
-        # ✅ Generar siempre el enlace para el organizador
-        nuevo_partido.generar_enlace_unico()
-
-        db.session.add(nuevo_partido)
-        db.session.commit()
-
-        # Guardar invitaciones
-        invitados_ids = request.form.getlist('invitados')
-        for uid in invitados_ids:
-            invitacion = Invitacion(partido_id=nuevo_partido.id, usuario_id=int(uid))
-            db.session.add(invitacion)
-        db.session.commit()
-
-        return redirect(url_for('detalle_partido', partido_id=nuevo_partido.id))
-
-    # 👇 aquí es donde pasas la clave a la plantilla
-    return render_template(
-        'crear_partido.html',
-        amigos=amigos,
-        google_maps_key=current_app.config['GOOGLE_MAPS_API_KEY']
-    )
-
-
-
-
 
 
 from flask import session  # ✅ importa esto
@@ -644,13 +591,22 @@ def utility_processor():
 def inject_notificaciones():
     if current_user.is_authenticated:
         solicitudes = Amistad.query.filter_by(amigo_id=current_user.id, confirmada=False).count()
-        invitaciones = Invitacion.query \
+
+        # Invitaciones de partidos libres (no VS)
+        invitaciones_libres = Invitacion.query \
             .filter_by(usuario_id=current_user.id) \
             .join(Partido).filter(Partido.cerrado == False).count()
+
+        # ✅ Invitaciones de partidos VS
+        invitaciones_vs = InvitacionVS.query \
+            .filter_by(invitado_id=current_user.id) \
+            .join(Partido).filter(Partido.cerrado == False).count()
+
         return {
             'solicitudes_count': solicitudes,
-            'invitaciones_count': invitaciones
+            'invitaciones_count': invitaciones_libres + invitaciones_vs
         }
+
     return {
         'solicitudes_count': 0,
         'invitaciones_count': 0
@@ -1133,20 +1089,21 @@ def cancelar_solicitud(user_id):
 @login_required
 def ajax_aceptar_invitacion(invitacion_id):
     invitacion = Invitacion.query.get_or_404(invitacion_id)
-
     if invitacion.usuario_id != current_user.id:
         return jsonify({'success': False}), 403
 
-    partido_id = invitacion.partido_id
+    ya_inscrito = Inscripcion.query.filter_by(user_id=current_user.id, partido_id=invitacion.partido_id).first()
+    if ya_inscrito:
+        return jsonify({'success': False, 'error': 'Ya estás inscrito en este partido.'})
 
-    # Elimina la invitación al aceptarla
+    inscripcion = Inscripcion(user_id=current_user.id, partido_id=invitacion.partido_id)
+    db.session.add(inscripcion)
     db.session.delete(invitacion)
     db.session.commit()
 
-    # Devuelve la URL para que el usuario elija el equipo
     return jsonify({
         'success': True,
-        'redirect_url': url_for('unirse_partido', partido_id=partido_id)
+        'redirect_url': url_for('detalle_partido', partido_id=invitacion.partido_id)
     })
 
 
@@ -1198,6 +1155,298 @@ def ajax_rechazar_amistad(solicitud_id):
 @app.route('/hora-local')
 def hora_local():
     return f"Hora local detectada por Flask: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
+#modo de juego
+@app.route('/modo_juego')
+def modo_juego():
+    return render_template('modo_juego.html')
+
+@app.route('/crear', methods=['GET', 'POST'])
+@login_required
+def crear_partido():
+    amigos = current_user.obtener_amigos()
+
+    if request.method == 'POST':
+        fecha_str = request.form['fecha']
+        hora_str = request.form['hora']
+        fecha_hora = datetime.strptime(f"{fecha_str} {hora_str}", "%Y-%m-%d %H:%M")
+        solo_por_invitacion = 'solo_por_invitacion' in request.form
+        
+
+        nuevo_partido = Partido(
+            fecha_hora=fecha_hora,
+            lugar=request.form['lugar'],
+            latitud=float(request.form['latitud']) if request.form['latitud'] else None,
+            longitud=float(request.form['longitud']) if request.form['longitud'] else None,
+            equipo1=request.form['equipo1'],
+            equipo2=request.form['equipo2'],
+            max_jugadores=int(request.form['max_jugadores']),
+            organizador_id=current_user.id,
+            solo_por_invitacion=solo_por_invitacion
+        )
+
+        # ✅ Generar siempre el enlace para el organizador
+        nuevo_partido.generar_enlace_unico()
+
+        db.session.add(nuevo_partido)
+        db.session.commit()
+
+        # Guardar invitaciones
+        invitados_ids = request.form.getlist('invitados')
+        for uid in invitados_ids:
+            invitacion = Invitacion(partido_id=nuevo_partido.id, usuario_id=int(uid))
+            db.session.add(invitacion)
+        db.session.commit()
+
+        return redirect(url_for('detalle_partido', partido_id=nuevo_partido.id))
+
+    # 👇 aquí es donde pasas la clave a la plantilla
+    return render_template(
+        'crear_partido.html',
+        amigos=amigos,
+        google_maps_key=current_app.config['GOOGLE_MAPS_API_KEY']
+    )
+def get_amigos_actuales():
+    return current_user.amigos  # o como lo tengas implementado
+
+@app.route('/crear_partido/vs', methods=['GET', 'POST'])
+@login_required
+def crear_partido_vs():
+    amigos = [current_user] + current_user.obtener_amigos()
+
+    if request.method == 'POST':
+        try:
+            fecha_str = request.form['fecha']
+            hora_str = request.form['hora']
+            fecha_hora = datetime.strptime(f"{fecha_str} {hora_str}", "%Y-%m-%d %H:%M")
+            solo_por_invitacion = 'solo_por_invitacion' in request.form
+
+            # Crear partido base
+            nuevo_partido = Partido(
+                fecha_hora=fecha_hora,
+                lugar=request.form['lugar'],
+                latitud=float(request.form['latitud']) if request.form['latitud'] else None,
+                longitud=float(request.form['longitud']) if request.form['longitud'] else None,
+                equipo1=request.form['equipo1'],
+                equipo2=request.form['equipo2'],
+                max_jugadores=int(request.form['max_jugadores']),
+                organizador_id=current_user.id,
+                solo_por_invitacion=solo_por_invitacion,
+                modo_juego='VS'
+            )
+            nuevo_partido.generar_enlace_unico()
+            db.session.add(nuevo_partido)
+            db.session.commit()  # ✅ Para obtener nuevo_partido.id válido
+
+            # Obtener capitanes
+            cap1_id = int(request.form['capitan_equipo1'])
+            cap2_id = int(request.form['capitan_equipo2'])
+
+            # ⚠️ Validar que no sea el mismo jugador
+            if cap1_id == cap2_id:
+                flash("Un jugador no puede ser capitán de ambos equipos.", "warning")
+                return render_template(
+                    'crear_partido_vs.html',
+                    amigos=amigos,
+                    google_maps_key=current_app.config['GOOGLE_MAPS_API_KEY'],
+                    datos_guardados=request.form
+                )
+
+            # Crear objeto PartidoVS
+            partido_vs = PartidoVS(
+                partido_id=nuevo_partido.id,
+                capitan_equipo1_id=cap1_id,
+                capitan_equipo2_id=cap2_id
+            )
+            db.session.add(partido_vs)
+
+            # 🔁 Invitar o inscribir capitanes
+            if cap1_id == current_user.id:
+                inscripcion_1 = Inscripcion(user_id=current_user.id, partido_id=nuevo_partido.id, equipo=nuevo_partido.equipo1)
+                db.session.add(inscripcion_1)
+            else:
+                invitacion_cap1 = InvitacionVS(
+                    partido_id=nuevo_partido.id,
+                    invitado_id=cap1_id,
+                    capitan_id=cap1_id,
+                    equipo=nuevo_partido.equipo1
+                )
+                db.session.add(invitacion_cap1)
+
+            if cap2_id == current_user.id:
+                inscripcion_2 = Inscripcion(user_id=current_user.id, partido_id=nuevo_partido.id, equipo=nuevo_partido.equipo2)
+                db.session.add(inscripcion_2)
+            else:
+                invitacion_cap2 = InvitacionVS(
+                    partido_id=nuevo_partido.id,
+                    invitado_id=cap2_id,
+                    capitan_id=cap2_id,
+                    equipo=nuevo_partido.equipo2
+                )
+                db.session.add(invitacion_cap2)
+
+            # 🔁 Invitaciones normales
+            invitados_ids = request.form.getlist('invitados')
+            for uid in invitados_ids:
+                db.session.add(Invitacion(
+                    partido_id=nuevo_partido.id,
+                    usuario_id=int(uid)
+                ))
+
+            db.session.commit()
+            flash("Partido VS creado exitosamente.", "success")
+            return redirect(url_for('detalle_partido', partido_id=nuevo_partido.id))
+
+        except Exception as e:
+            db.session.rollback()
+            print("❌ Error al crear partido VS:", e)
+            flash("Ocurrió un error al crear el partido. Intenta nuevamente.", "danger")
+            return render_template(
+                'crear_partido_vs.html',
+                amigos=amigos,
+                google_maps_key=current_app.config['GOOGLE_MAPS_API_KEY'],
+                datos_guardados=request.form
+            )
+
+    # GET request
+    return render_template(
+        'crear_partido_vs.html',
+        amigos=amigos,
+        google_maps_key=current_app.config['GOOGLE_MAPS_API_KEY']
+    )
+
+
+@app.route('/crear_partido/torneo', methods=['GET', 'POST'])
+def crear_partido_torneo():
+    amigos = current_user.obtener_amigos() 
+    return render_template('crear_partido_torneo.html', amigos=get_amigos_actuales()) 
+
+@app.route('/debug/limpiar_vs_huerfanos')
+@login_required  # opcional, por seguridad
+def limpiar_vs_huerfanos():
+    from models import PartidoVS
+    eliminados = 0
+
+    partidos_vs_invalidos = PartidoVS.query.filter_by(partido_id=None).all()
+    for p in partidos_vs_invalidos:
+        db.session.delete(p)
+        eliminados += 1
+
+    db.session.commit()
+    return f"✔️ Se eliminaron {eliminados} registros de PartidoVS con partido_id = None."   
+
+@app.route('/invitar_vs/<int:partido_id>', methods=['GET', 'POST'])
+@login_required
+def invitar_vs(partido_id):
+    partido = Partido.query.get_or_404(partido_id)
+    vs = partido.vs
+
+    if not vs:
+        abort(400, "No es un partido VS")
+
+    if current_user.id == vs.capitan_equipo1_id:
+        equipo = partido.equipo1
+    elif current_user.id == vs.capitan_equipo2_id:
+        equipo = partido.equipo2
+    else:
+        abort(403, "No eres capitán en este partido")
+
+    # Excluir usuarios ya inscritos o invitados
+    ya_ocupados = set(
+        [i.user_id for i in partido.inscripciones] +
+        [i.invitado_id for i in partido.invitaciones_vs]
+    )
+
+    amigos_disponibles = [amigo for amigo in current_user.obtener_amigos() if amigo.id not in ya_ocupados]
+
+    if request.method == 'POST':
+        seleccionados = request.form.getlist('invitados')
+        for user_id in seleccionados:
+            nueva_invitacion = InvitacionVS(
+                partido_id=partido.id,
+                invitado_id=int(user_id),
+                capitan_id=current_user.id,
+                equipo=equipo
+            )
+            db.session.add(nueva_invitacion)
+        db.session.commit()
+        flash("Invitaciones enviadas", "success")
+        return redirect(url_for('detalle_partido', partido_id=partido.id))
+
+    return render_template('invitar_vs.html', partido=partido, equipo=equipo, amigos=amigos_disponibles)
+
+
+@app.route('/aceptar_invitacion_vs/<int:invitacion_id>', methods=['POST'])
+@login_required
+def aceptar_invitacion_vs(invitacion_id):
+    invitacion = InvitacionVS.query.get_or_404(invitacion_id)
+
+    if invitacion.invitado_id != current_user.id:
+        abort(403)
+
+    partido = invitacion.partido
+
+    ya_inscrito = any(i.user_id == current_user.id for i in partido.inscripciones)
+    if ya_inscrito:
+        flash("Ya estás inscrito en este partido.", "warning")
+        return redirect(url_for('detalle_partido', partido_id=partido.id))
+
+    inscripcion = Inscripcion(
+        user_id=current_user.id,
+        partido_id=partido.id,
+        equipo=invitacion.equipo
+    )
+    db.session.add(inscripcion)
+    db.session.delete(invitacion)
+    db.session.commit()
+
+    flash(f"Te uniste al equipo {invitacion.equipo}", "success")
+    return redirect(url_for('detalle_partido', partido_id=partido.id))
+
+@app.route('/ajax/aceptar_invitacion_vs/<int:invitacion_id>', methods=['POST'])
+@login_required
+def ajax_aceptar_invitacion_vs(invitacion_id):
+    invitacion = InvitacionVS.query.get_or_404(invitacion_id)
+    if invitacion.invitado_id != current_user.id:
+        return jsonify({'success': False}), 403
+
+    ya_inscrito = Inscripcion.query.filter_by(user_id=current_user.id, partido_id=invitacion.partido_id).first()
+    if ya_inscrito:
+        return jsonify({'success': False, 'error': 'Ya estás inscrito en este partido.'})
+
+    inscripcion = Inscripcion(user_id=current_user.id, partido_id=invitacion.partido_id, equipo=invitacion.equipo)
+    db.session.add(inscripcion)
+    db.session.delete(invitacion)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'redirect_url': url_for('detalle_partido', partido_id=invitacion.partido_id)
+    })
+
+@app.route('/rechazar_invitacion_vs/<int:invitacion_id>', methods=['POST'])
+@login_required
+def rechazar_invitacion_vs(invitacion_id):
+    invitacion = InvitacionVS.query.get_or_404(invitacion_id)
+
+    if invitacion.invitado_id != current_user.id:
+        abort(403)
+
+    db.session.delete(invitacion)
+    db.session.commit()
+    flash("Invitación rechazada.")
+    return redirect(url_for('ver_notificaciones'))
+   
+@app.route('/ajax/rechazar_invitacion_vs/<int:invitacion_id>', methods=['POST'])
+@login_required
+def ajax_rechazar_invitacion_vs(invitacion_id):
+    invitacion = InvitacionVS.query.get_or_404(invitacion_id)
+    if invitacion.invitado_id != current_user.id:
+        return jsonify({'success': False}), 403
+
+    db.session.delete(invitacion)
+    db.session.commit()
+    return jsonify({'success': True})
 
 # Crear las tablas si no existen
 if __name__ == '__main__':

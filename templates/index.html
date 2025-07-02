@@ -1,5 +1,4 @@
-{% extends 'base.html' %} {% block title %}Partidos de Fútbol{% endblock %} {%
-block content %}
+{% extends 'base.html' %} {% block title %}Partidos de Fútbol{% endblock %} {% block content %}
 
 <link
   rel="stylesheet"
@@ -209,13 +208,15 @@ block content %}
         <div class="col-md-3">
           <select class="form-select" id="lugarFiltro">
             <option value="">Todos los lugares</option>
-            {% set lugares_unicos = [] %} {% for datos in datos_partidos %} {%
-            if datos.partido.lugar not in lugares_unicos %} {% set _ =
-            lugares_unicos.append(datos.partido.lugar) %}
-            <option value="{{ datos.partido.lugar }}">
-              {{ datos.partido.lugar }}
-            </option>
-            {% endif %} {% endfor %}
+            {% set lugares_unicos = [] %}
+            {% for datos in datos_partidos %}
+              {% if datos.partido.lugar not in lugares_unicos %}
+                {% set _ = lugares_unicos.append(datos.partido.lugar) %}
+                <option value="{{ datos.partido.lugar }}">
+                  {{ datos.partido.lugar }}
+                </option>
+              {% endif %}
+            {% endfor %}
           </select>
         </div>
         <div class="col-md-3">
@@ -231,347 +232,351 @@ block content %}
   </div>
 
   <!-- Tarjetas de partidos -->
-{% if datos_partidos %}
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-  {% for datos in datos_partidos %}
-  {% set partido = datos.partido %}
-  {% set cancelado_por_falta = datos.cancelado_por_falta %}
-  <div
-  class="col partido-card"
-  data-equipo1="{{ partido.equipo1 | lower }}"
-  data-equipo2="{{ partido.equipo2 | lower }}"
-  data-lugar="{{ partido.lugar | lower }}"
-  data-fecha="{{ partido.fecha_hora.strftime('%Y-%m-%d') }}"
-  data-fecha-hora="{{ partido.fecha_hora.astimezone().isoformat() }}"
-  data-resultado="{{ partido.resultado }}"
-  data-cerrado="{{ 'true' if partido.cerrado else 'false' }}"
-  data-cancelado="{{ 'true' if cancelado_por_falta else 'false' }}"
-  data-porcentaje="{{ datos.porcentaje_inscritos }}"
-  data-estado="{% if cancelado_por_falta %}cancelado{% elif partido.cerrado %}terminado{% elif partido.fecha_hora <= now %}en-curso{% else %}proximo{% endif %}"
->
-    <div class="card shadow-sm h-100 d-flex flex-column position-relative">
-  {% if cancelado_por_falta %}
-    <span class="estado-etiqueta bg-danger">
-      <i class="fas fa-times-circle"></i> Cancelado
-    </span>
-  {% elif partido.cerrado %}
-    <span class="estado-etiqueta terminado">
-      <i class="fas fa-flag-checkered"></i> Terminado
-    </span>
-  {% elif partido.fecha_hora <= now %}
-    <span class="estado-etiqueta en-curso">
-      <i class="fas fa-sync-alt"></i> En curso
-    </span>
-  {% else %}
-    <span class="estado-etiqueta proximo">
-      <i class="fas fa-hourglass-start"></i> Próximamente
-    </span>
-  {% endif %}
-
-
-      <div class="card-body p-4 d-flex flex-column">
-        <div class="flex-grow-1">
-          {% set resultado = partido.resultado %}
-            {# ✅ ALERTA DE CANCELACIÓN POR FALTA DE JUGADORES #}
-          {% if cancelado_por_falta %}
-          <div class="alert alert-danger py-2 px-3 text-center small mb-3">
-            ❌ Partido cancelado por falta de jugadores.<br />
-            Será eliminado automáticamente en unos minutos.
-          </div>
-          {% endif %}
-            {% if resultado %} {% set
-            goles = resultado.split('-') %} {% set goles_equipo1 = goles[0]|int
-            %} {% set goles_equipo2 = goles[1]|int %} {% set equipo_ganador =
-            None %} {% if goles_equipo1 > goles_equipo2 %} {% set equipo_ganador
-            = partido.equipo1 %} {% set color_ganador = 'equipo1-color' %} {%
-            elif goles_equipo2 > goles_equipo1 %} {% set equipo_ganador =
-            partido.equipo2 %} {% set color_ganador = 'equipo2-color' %} {%
-            endif %}
-
-            <div class="equipo-horizontal mb-3">
-              <div class="nombre equipo1-color">
-                <i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}
-              </div>
-              <div class="resultado-final">
-                {{ goles_equipo1 }} - {{ goles_equipo2 }}
-              </div>
-              <div class="nombre equipo2-color">
-                <i class="fas fa-shield-heart me-2"></i>{{ partido.equipo2 }}
-              </div>
-            </div>
-
-            {% if equipo_ganador %}
-            <div class="text-center mb-3">
-              <div class="ganador-icono mb-1">🏆</div>
-              <div class="ganador-destacado {{ color_ganador }}">
-                {{ equipo_ganador }}
-              </div>
-              <span class="badge bg-success fs-6 mt-1">Ganador</span>
-            </div>
+  {% if datos_partidos %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      {% for datos in datos_partidos %}
+        {% set partido = datos.partido %}
+        {% set cancelado_por_falta = datos.cancelado_por_falta %}
+        <div
+          class="col partido-card"
+          data-equipo1="{{ partido.equipo1 | lower }}"
+          data-equipo2="{{ partido.equipo2 | lower }}"
+          data-lugar="{{ partido.lugar | lower }}"
+          data-fecha="{{ partido.fecha_hora.strftime('%Y-%m-%d') }}"
+          data-fecha-hora="{{ partido.fecha_hora.astimezone().isoformat() }}"
+          data-resultado="{{ partido.resultado }}"
+          data-cerrado="{{ 'true' if partido.cerrado else 'false' }}"
+          data-cancelado="{{ 'true' if cancelado_por_falta else 'false' }}"
+          data-porcentaje="{{ datos.porcentaje_inscritos }}"
+          data-estado="{% if cancelado_por_falta %}cancelado{% elif partido.cerrado %}terminado{% elif partido.fecha_hora <= now %}en-curso{% else %}proximo{% endif %}"
+        >
+          <div class="card shadow-sm h-100 d-flex flex-column position-relative">
+            {% if cancelado_por_falta %}
+              <span class="estado-etiqueta bg-danger">
+                <i class="fas fa-times-circle"></i> Cancelado
+              </span>
+            {% elif partido.cerrado %}
+              <span class="estado-etiqueta terminado">
+                <i class="fas fa-flag-checkered"></i> Terminado
+              </span>
+            {% elif partido.fecha_hora <= now %}
+              <span class="estado-etiqueta en-curso">
+                <i class="fas fa-sync-alt"></i> En curso
+              </span>
             {% else %}
-            <div class="text-center mb-3">
-              <h5 class="text-warning fw-bold mb-1">🤝 Empate</h5>
-              <span class="badge bg-warning text-dark">Sin ganador</span>
-            </div>
-            {% endif %} {% if datos.user_inscrito and datos.puede_calificar %}
-            <div class="alert alert-info py-2 px-3 text-center small mb-3">
-              📋 Partido terminado. Puedes calificar a tus compañeros.
-              <a
-                href="{{ url_for('detalle_partido', partido_id=partido.id) }}"
-                class="btn btn-sm btn-success mt-1"
-                >Calificar</a
-              >
-            </div>
-            {% elif datos.user_inscrito %}
-            <div class="alert alert-success py-2 px-3 text-center small mb-3">
-              ✅ Ya calificaste a todos los compañeros.
-            </div>
-            {% else %}
-            <div class="alert alert-secondary py-2 px-3 text-center small mb-3">
-              ✅ Partido finalizado.
-            </div>
-            {% endif %} {% else %}
-            <div class="equipo-horizontal mb-3">
-              <div class="nombre equipo1-color">
-                <i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}
-              </div>
-              <div class="resultado-final">vs</div>
-              <div class="nombre equipo2-color">
-                <i class="fas fa-shield-heart me-2"></i>{{ partido.equipo2 }}
-              </div>
-            </div>
-
-            {% if current_user.id == partido.organizador_id and not cancelado_por_falta %}
-  <div class="alert alert-warning py-2 px-3 text-center small mb-3">
-    ⏳ Tienes hasta
-    <strong>{{ partido.tiempo_limite().strftime('%d/%m/%Y %H:%M') }}</strong>
-    para cerrar con resultado.
-  </div>
-            {% elif partido.fecha_hora > now %}
-            <div class="alert alert-warning py-2 px-3 text-center small mb-3">
-              🧩 Se están armando los equipos.
-            </div>
-            {% elif partido.fecha_hora <= now and not partido.cerrado and not cancelado_por_falta %}
-  <div class="alert alert-primary py-2 px-3 text-center small mb-3">
-    ⚽ El partido ya se está jugando.
-  </div>
-            {% endif %} {% endif %}
-
-            <p class="text-muted mb-1 small text-center">
-              <i class="fa-regular fa-calendar-days me-1"></i>{{
-              partido.fecha_hora.strftime('%d/%m/%Y') }}
-              <i class="fa-regular fa-clock ms-2 me-1"></i>{{
-              partido.fecha_hora.strftime('%H:%M') }}
-            </p>
-            <p class="text-center small text-muted mb-2">
-              <i class="fas fa-map-marker-alt text-primary me-1"></i
-              ><strong>Lugar:</strong> {{ partido.lugar }}
-            </p>
-
-            <div class="mb-3">
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="equipo1-color d-flex align-items-center">
-                  <i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}
-                </span>
-                <span class="d-flex align-items-center">
-                  <i class="fas fa-user me-1 text-muted"></i>{{
-                  datos.count_equipo1 }}/{{ partido.max_jugadores }} {% if
-                  datos.count_equipo1 >= partido.max_jugadores %}
-                  <span class="badge bg-danger ms-2">Cupo lleno</span>
-                  {% endif %}
-                </span>
-              </div>
-              <div
-                class="d-flex justify-content-between align-items-center mt-1"
-              >
-                <span class="equipo2-color d-flex align-items-center">
-                  <i class="fas fa-shield-heart me-2"></i>{{ partido.equipo2 }}
-                </span>
-                <span class="d-flex align-items-center">
-                  <i class="fas fa-user me-1 text-muted"></i>{{
-                  datos.count_equipo2 }}/{{ partido.max_jugadores }} {% if
-                  datos.count_equipo2 >= partido.max_jugadores %}
-                  <span class="badge bg-danger ms-2">Cupo lleno</span>
-                  {% endif %}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Acciones -->
-          {% if current_user.is_authenticated %} {% set equipo1_lleno =
-          datos.count_equipo1 >= partido.max_jugadores %} {% set equipo2_lleno =
-          datos.count_equipo2 >= partido.max_jugadores %} {% set equipos_llenos
-          = equipo1_lleno and equipo2_lleno %} {% set partido_en_curso =
-          partido.fecha_hora <= now %} {% if not partido.cerrado and not
-          partido.resultado and not partido.invitacion and not equipos_llenos
-          and not datos.user_inscrito and not partido_en_curso %}
-          <form
-            action="{{ url_for('unirse_partido', partido_id=partido.id) }}"
-            method="POST"
-          >
-            <button type="submit" class="btn btn-primary btn-sm w-100 mb-2">
-              🙋 Unirse al partido
-            </button>
-          </form>
-          {% endif %} {% endif %}
-          <div class="mt-auto pt-2">
-            <div class="d-grid mb-2">
-              <a
-                href="{{ url_for('detalle_partido', partido_id=partido.id) }}"
-                class="btn btn-outline-primary btn-sm w-100"
-              >
-                🔍 Ver detalle
-              </a>
-            </div>
-
-            {% if current_user.is_authenticated %} {% if current_user.id ==
-            partido.organizador_id %}
-            <div class="d-flex flex-column gap-2">
-              {# Botón EDITAR: solo si NO ha comenzado y NO está cerrado #} {%
-              if not partido.cerrado and partido.fecha_hora > now %}
-              <a
-                href="{{ url_for('editar_partido', partido_id=partido.id) }}"
-                class="btn btn-outline-secondary btn-sm w-100"
-                >✏️ Editar</a
-              >
-              {% endif %} {# Botón ELIMINAR: siempre que no esté cerrado #} {%
-              if not partido.cerrado %}
-              <form
-                action="{{ url_for('eliminar_partido', partido_id=partido.id) }}"
-                method="POST"
-                onsubmit="return confirm('¿Eliminar este partido?');"
-              >
-                <button
-                  class="btn btn-outline-danger btn-sm w-100"
-                  type="submit"
-                >
-                  🗑️ Eliminar
-                </button>
-              </form>
-              {% endif %} {# Botón REGISTRAR RESULTADO: si no expiró y no está
-              cerrado #} {% set partido_empezado_hace_2_horas = (now -
-              partido.fecha_hora).total_seconds() >= 7200 %} 
-              {% if current_user.id == partido.organizador_id and not partido.cerrado and partido.resultado is none and partido_empezado_hace_2_horas %}
-              <a
-                href="{{ url_for('registrar_resultado', partido_id=partido.id) }}"
-                class="btn btn-outline-success btn-sm w-100"
-                >📝 Registrar resultado</a
-              >
-              {% endif %}
-            </div>
-            {% endif %} {% endif %} {% if current_user.id ==
-            partido.organizador_id and partido.cerrado and partido.resultado %}
-            <a
-              href="{{ url_for('editar_resultado', partido_id=partido.id) }}"
-              class="btn btn-outline-warning btn-sm w-100 mt-2"
-            >
-              ✏️ Editar resultado
-            </a>
+              <span class="estado-etiqueta proximo">
+                <i class="fas fa-hourglass-start"></i> Próximamente
+              </span>
             {% endif %}
+
+            <div class="card-body p-4 d-flex flex-column">
+              <div class="text-center mb-3">
+                {% if partido.modo_juego == 'VS' %}
+                  <span class="badge bg-danger fs-6">🆚 Modo Versus</span>
+                {% elif partido.modo_juego == 'TORNEO' %}
+                  <span class="badge bg-primary fs-6">🏆 Torneo</span>
+                {% else %}
+                  <span class="badge bg-success fs-6">🎯 Libre</span>
+                {% endif %}
+              </div>
+              <div class="flex-grow-1">
+                {% set resultado = partido.resultado %}
+                {# ✅ ALERTA DE CANCELACIÓN POR FALTA DE JUGADORES #}
+                {% if cancelado_por_falta %}
+                  <div class="alert alert-danger py-2 px-3 text-center small mb-3">
+                    ❌ Partido cancelado por falta de jugadores.<br />
+                    Será eliminado automáticamente en unos minutos.
+                  </div>
+                {% endif %}
+                
+                {% if resultado %}
+                  {% set goles = resultado.split('-') %}
+                  {% set goles_equipo1 = goles[0]|int %}
+                  {% set goles_equipo2 = goles[1]|int %}
+                  {% set equipo_ganador = None %}
+                  {% if goles_equipo1 > goles_equipo2 %}
+                    {% set equipo_ganador = partido.equipo1 %}
+                    {% set color_ganador = 'equipo1-color' %}
+                  {% elif goles_equipo2 > goles_equipo1 %}
+                    {% set equipo_ganador = partido.equipo2 %}
+                    {% set color_ganador = 'equipo2-color' %}
+                  {% endif %}
+
+                  <div class="equipo-horizontal mb-3">
+                    <div class="nombre equipo1-color">
+                      <i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}
+                    </div>
+                    <div class="resultado-final">
+                      {{ goles_equipo1 }} - {{ goles_equipo2 }}
+                    </div>
+                    <div class="nombre equipo2-color">
+                      <i class="fas fa-shield-heart me-2"></i>{{ partido.equipo2 }}
+                    </div>
+                  </div>
+
+                  {% if equipo_ganador %}
+                    <div class="text-center mb-3">
+                      <div class="ganador-icono mb-1">🏆</div>
+                      <div class="ganador-destacado {{ color_ganador }}">
+                        {{ equipo_ganador }}
+                      </div>
+                      <span class="badge bg-success fs-6 mt-1">Ganador</span>
+                    </div>
+                  {% else %}
+                    <div class="text-center mb-3">
+                      <h5 class="text-warning fw-bold mb-1">🤝 Empate</h5>
+                      <span class="badge bg-warning text-dark">Sin ganador</span>
+                    </div>
+                  {% endif %}
+                  
+                  {% if datos.user_inscrito and datos.puede_calificar %}
+                    <div class="alert alert-info py-2 px-3 text-center small mb-3">
+                      📋 Partido terminado. Puedes calificar a tus compañeros.
+                      <a
+                        href="{{ url_for('detalle_partido', partido_id=partido.id) }}"
+                        class="btn btn-sm btn-success mt-1"
+                      >
+                        Calificar
+                      </a>
+                    </div>
+                  {% elif datos.user_inscrito %}
+                    <div class="alert alert-success py-2 px-3 text-center small mb-3">
+                      ✅ Ya calificaste a todos los compañeros.
+                    </div>
+                  {% else %}
+                    <div class="alert alert-secondary py-2 px-3 text-center small mb-3">
+                      ✅ Partido finalizado.
+                    </div>
+                  {% endif %}
+                {% else %}
+                  <div class="equipo-horizontal mb-3">
+                    <div class="nombre equipo1-color">
+                      <i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}
+                    </div>
+                    <div class="resultado-final">vs</div>
+                    <div class="nombre equipo2-color">
+                      <i class="fas fa-shield-heart me-2"></i>{{ partido.equipo2 }}
+                    </div>
+                  </div>
+
+                  {% if current_user.id == partido.organizador_id and not cancelado_por_falta %}
+                    <div class="alert alert-warning py-2 px-3 text-center small mb-3">
+                      ⏳ Tienes hasta
+                      <strong>{{ partido.tiempo_limite().strftime('%d/%m/%Y %H:%M') }}</strong>
+                      para cerrar con resultado.
+                    </div>
+                  {% elif partido.fecha_hora > now %}
+                    <div class="alert alert-warning py-2 px-3 text-center small mb-3">
+                      🧩 Se están armando los equipos.
+                    </div>
+                  {% elif partido.fecha_hora <= now and not partido.cerrado and not cancelado_por_falta %}
+                    <div class="alert alert-primary py-2 px-3 text-center small mb-3">
+                      ⚽ El partido ya se está jugando.
+                    </div>
+                  {% endif %}
+                {% endif %}
+
+                <p class="text-muted mb-1 small text-center">
+                  <i class="fa-regular fa-calendar-days me-1"></i>{{ partido.fecha_hora.strftime('%d/%m/%Y') }}
+                  <i class="fa-regular fa-clock ms-2 me-1"></i>{{ partido.fecha_hora.strftime('%H:%M') }}
+                </p>
+                <p class="text-center small text-muted mb-2">
+                  <i class="fas fa-map-marker-alt text-primary me-1"></i>
+                  <strong>Lugar:</strong> {{ partido.lugar }}
+                </p>
+
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="equipo1-color d-flex align-items-center">
+                      <i class="fas fa-shield-alt me-2"></i>{{ partido.equipo1 }}
+                    </span>
+                    <span class="d-flex align-items-center">
+                      <i class="fas fa-user me-1 text-muted"></i>{{ datos.count_equipo1 }}/{{ partido.max_jugadores }}
+                      {% if datos.count_equipo1 >= partido.max_jugadores %}
+                        <span class="badge bg-danger ms-2">Cupo lleno</span>
+                      {% endif %}
+                    </span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                    <span class="equipo2-color d-flex align-items-center">
+                      <i class="fas fa-shield-heart me-2"></i>{{ partido.equipo2 }}
+                    </span>
+                    <span class="d-flex align-items-center">
+                      <i class="fas fa-user me-1 text-muted"></i>{{ datos.count_equipo2 }}/{{ partido.max_jugadores }}
+                      {% if datos.count_equipo2 >= partido.max_jugadores %}
+                        <span class="badge bg-danger ms-2">Cupo lleno</span>
+                      {% endif %}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Acciones -->
+              {% if current_user.is_authenticated %}
+                {% set equipo1_lleno = datos.count_equipo1 >= partido.max_jugadores %}
+                {% set equipo2_lleno = datos.count_equipo2 >= partido.max_jugadores %}
+                {% set equipos_llenos = equipo1_lleno and equipo2_lleno %}
+                {% set partido_en_curso = partido.fecha_hora <= now %}
+
+                {% if not partido.cerrado and not partido.resultado and not equipos_llenos and not datos.user_inscrito and not partido_en_curso %}
+                  {% if partido.modo_juego == 'VS' %}
+                    {% set invitacion_vs = current_user.invitaciones_vs | selectattr("partido_id", "equalto", partido.id) | list %}
+                    {% if invitacion_vs %}
+                      <form action="{{ url_for('aceptar_invitacion_vs', invitacion_id=invitacion_vs[0].id) }}" method="POST">
+                        <button type="submit" class="btn btn-success btn-sm w-100 mb-2">
+                          🎟️ Unirse al equipo
+                        </button>
+                      </form>
+                    {% else %}
+                      <p class="text-muted text-center small">Solo jugadores invitados pueden unirse.</p>
+                    {% endif %}
+                  {% else %}
+                    {% if not partido.solo_por_invitacion or datos.user_invitado %}
+                      <form action="{{ url_for('unirse_partido', partido_id=partido.id) }}" method="POST">
+                        <button type="submit" class="btn btn-primary btn-sm w-100 mb-2">
+                          🙋 Unirse al partido
+                        </button>
+                      </form>
+                    {% endif %}
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+
+              <!-- Botón de ver detalle -->
+              <div class="mt-auto pt-2">
+                <div class="d-grid mb-2">
+                  <a href="{{ url_for('detalle_partido', partido_id=partido.id) }}" class="btn btn-outline-primary btn-sm w-100">
+                    🔍 Ver detalle
+                  </a>
+                </div>
+
+                {% if current_user.is_authenticated %}
+                  {% if current_user.id == partido.organizador_id %}
+                    <div class="d-flex flex-column gap-2">
+                      {% if not partido.cerrado and partido.fecha_hora > now %}
+                        <a href="{{ url_for('editar_partido', partido_id=partido.id) }}" class="btn btn-outline-secondary btn-sm w-100">
+                          ✏️ Editar
+                        </a>
+                      {% endif %}
+
+                      {% if not partido.cerrado %}
+                        <form action="{{ url_for('eliminar_partido', partido_id=partido.id) }}" method="POST" onsubmit="return confirm('¿Eliminar este partido?');">
+                          <button class="btn btn-outline-danger btn-sm w-100" type="submit">
+                            🗑️ Eliminar
+                          </button>
+                        </form>
+                      {% endif %}
+
+                      {% set partido_empezado_hace_2_horas = (now - partido.fecha_hora).total_seconds() >= 7200 %}
+                      {% if current_user.id == partido.organizador_id and not partido.cerrado and partido.resultado is none and partido_empezado_hace_2_horas %}
+                        <a href="{{ url_for('registrar_resultado', partido_id=partido.id) }}" class="btn btn-outline-success btn-sm w-100">
+                          📝 Registrar resultado
+                        </a>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+
+                  {% if current_user.id == partido.organizador_id and partido.cerrado and partido.resultado %}
+                    <a href="{{ url_for('editar_resultado', partido_id=partido.id) }}" class="btn btn-outline-warning btn-sm w-100 mt-2">
+                      ✏️ Editar resultado
+                    </a>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="alert alert-info text-center mt-4">
-    No hay partidos organizados aún.
-  </div>
   {% endif %}
-</div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const searchInput = document.getElementById("busquedaInput");
-    const fechaFiltro = document.getElementById("fechaFiltro");
-    const lugarFiltro = document.getElementById("lugarFiltro");
-    const estadoFiltro = document.getElementById("estadoFiltro");
-    const cards = document.querySelectorAll(".partido-card");
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const searchInput = document.getElementById("busquedaInput");
+      const fechaFiltro = document.getElementById("fechaFiltro");
+      const lugarFiltro = document.getElementById("lugarFiltro");
+      const estadoFiltro = document.getElementById("estadoFiltro");
+      const cards = document.querySelectorAll(".partido-card");
 
-    function filtrarPartidos() {
-      const texto = searchInput.value.toLowerCase();
-      const fecha = fechaFiltro.value;
-      const lugar = lugarFiltro.value.toLowerCase();
-      const estado = estadoFiltro.value;
+      function filtrarPartidos() {
+        const texto = searchInput.value.toLowerCase();
+        const fecha = fechaFiltro.value;
+        const lugar = lugarFiltro.value.toLowerCase();
+        const estado = estadoFiltro.value;
 
-      cards.forEach((card) => {
-        const equipo1 = card.dataset.equipo1;
-        const equipo2 = card.dataset.equipo2;
-        const cardLugar = card.dataset.lugar;
-        const cardFecha = card.dataset.fecha;
-        const cardEstado = card.dataset.estado;
+        cards.forEach((card) => {
+          const equipo1 = card.dataset.equipo1;
+          const equipo2 = card.dataset.equipo2;
+          const cardLugar = card.dataset.lugar;
+          const cardFecha = card.dataset.fecha;
+          const cardEstado = card.dataset.estado;
 
-        const coincideBusqueda =
-          equipo1.includes(texto) ||
-          equipo2.includes(texto) ||
-          cardLugar.includes(texto);
-        const coincideFecha = !fecha || cardFecha === fecha;
-        const coincideLugar = !lugar || cardLugar === lugar;
-        const coincideEstado = !estado || cardEstado === estado;
+          const coincideBusqueda =
+            equipo1.includes(texto) ||
+            equipo2.includes(texto) ||
+            cardLugar.includes(texto);
+          const coincideFecha = !fecha || cardFecha === fecha;
+          const coincideLugar = !lugar || cardLugar === lugar;
+          const coincideEstado = !estado || cardEstado === estado;
 
-        card.style.display =
-          coincideBusqueda && coincideFecha && coincideLugar && coincideEstado
-            ? "block"
-            : "none";
-      });
-    }
-
-    searchInput.addEventListener("input", filtrarPartidos);
-    fechaFiltro.addEventListener("change", filtrarPartidos);
-    lugarFiltro.addEventListener("change", filtrarPartidos);
-    estadoFiltro.addEventListener("change", filtrarPartidos);
-  });
-
-  document.addEventListener("DOMContentLoaded", () => {
-  const updateEstados = () => {
-    const cards = document.querySelectorAll(".partido-card");
-
-    cards.forEach((card) => {
-      const estadoEtiqueta = card.querySelector(".estado-etiqueta");
-      const fechaStr = card.dataset.fechaHora;
-      const cerrado = card.dataset.cerrado === "true";
-      const cancelado = card.dataset.cancelado === "true";
-      const porcentaje = parseFloat(card.dataset.porcentaje || "0");
-
-      if (!fechaStr || !estadoEtiqueta) return;
-
-      const resultado = card.dataset.resultado?.trim();
-      const tieneResultado = resultado && resultado !== "" && resultado !== "null";
-
-      const fechaPartido = new Date(fechaStr);
-      const ahora = new Date();
-      const diffMin = (ahora - fechaPartido) / (1000 * 60);
-
-      let nuevoEstado = "";
-      let claseNueva = "";
-
-      if (cancelado) {
-        nuevoEstado = "Cancelado";
-        claseNueva = "bg-danger";
-      } else if (cerrado && tieneResultado) {
-        nuevoEstado = "Terminado";
-        claseNueva = "terminado";
-      } else if (diffMin >= 0 && porcentaje >= 0.7) {
-        nuevoEstado = "En curso";
-        claseNueva = "en-curso";
-      } else {
-        nuevoEstado = "Próximamente";
-        claseNueva = "proximo";
+          card.style.display =
+            coincideBusqueda && coincideFecha && coincideLugar && coincideEstado
+              ? "block"
+              : "none";
+        });
       }
 
-      estadoEtiqueta.textContent = nuevoEstado;
-      estadoEtiqueta.className = "estado-etiqueta " + claseNueva;
-      card.dataset.estado = claseNueva;
+      searchInput.addEventListener("input", filtrarPartidos);
+      fechaFiltro.addEventListener("change", filtrarPartidos);
+      lugarFiltro.addEventListener("change", filtrarPartidos);
+      estadoFiltro.addEventListener("change", filtrarPartidos);
     });
-  };
 
-  updateEstados();
-  setInterval(updateEstados, 60000); // cada minuto
-});
-</script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const updateEstados = () => {
+        const cards = document.querySelectorAll(".partido-card");
 
+        cards.forEach((card) => {
+          const estadoEtiqueta = card.querySelector(".estado-etiqueta");
+          const fechaStr = card.dataset.fechaHora;
+          const cerrado = card.dataset.cerrado === "true";
+          const cancelado = card.dataset.cancelado === "true";
+          const porcentaje = parseFloat(card.dataset.porcentaje || "0");
+
+          if (!fechaStr || !estadoEtiqueta) return;
+
+          const resultado = card.dataset.resultado?.trim();
+          const tieneResultado = resultado && resultado !== "" && resultado !== "null";
+
+          const fechaPartido = new Date(fechaStr);
+          const ahora = new Date();
+          const diffMin = (ahora - fechaPartido) / (1000 * 60);
+
+          let nuevoEstado = "";
+          let claseNueva = "";
+
+          if (cancelado) {
+            nuevoEstado = "Cancelado";
+            claseNueva = "bg-danger";
+          } else if (cerrado && tieneResultado) {
+            nuevoEstado = "Terminado";
+            claseNueva = "terminado";
+          } else if (diffMin >= 0 && porcentaje >= 0.7) {
+            nuevoEstado = "En curso";
+            claseNueva = "en-curso";
+          } else {
+            nuevoEstado = "Próximamente";
+            claseNueva = "proximo";
+          }
+
+          estadoEtiqueta.textContent = nuevoEstado;
+          estadoEtiqueta.className = "estado-etiqueta " + claseNueva;
+          card.dataset.estado = claseNueva;
+        });
+      };
+
+      updateEstados();
+      setInterval(updateEstados, 60000); // cada minuto
+    });
+  </script>
 {% endblock %}
-
-

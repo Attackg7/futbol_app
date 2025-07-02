@@ -311,25 +311,62 @@
 </div>
 
 
-    <!-- Acciones del usuario -->
+   <!-- Acciones del usuario -->
 <div class="text-center mt-4">
     {% if current_user.is_authenticated %}
+
+        {% set invitacion_vs = current_user.invitaciones_vs
+            | selectattr("partido_id", "equalto", partido.id)
+            | selectattr("invitado_id", "equalto", current_user.id)
+            | list
+            | first %}
+
+        {% set fue_invitado = invitado or invitacion_vs %}
+        {% set es_vs = partido.modo_juego == 'VS' %}
+        {% set puede_unirse = fue_invitado or not partido.solo_por_invitacion %}
+
         {% if partido.cerrado %}
             <p class="text-muted">Este partido está cerrado.</p>
+
         {% elif ya_inscrito %}
             <p class="text-success">Ya estás inscrito en este partido.</p>
+
         {% elif partido.esta_en_curso() %}
             <p class="text-warning fw-bold">⏳ Este partido ya comenzó. No puedes unirte.</p>
-        {% elif invitado and not partido.cerrado %}
-            <a href="{{ url_for('unirse_partido', partido_id=partido.id) }}" class="btn btn-success">Unirse al partido</a>
-        {% elif not partido.solo_por_invitacion %}
-            <a href="{{ url_for('unirse_partido', partido_id=partido.id) }}" class="btn btn-primary">Unirse al partido</a>
+
+        {% elif puede_unirse %}
+            {% if es_vs %}
+                {% if invitacion_vs and not invitacion_vs.aceptada %}
+                    <a href="{{ url_for('aceptar_invitacion_vs', invitacion_id=invitacion_vs.id) }}" class="btn btn-success">
+                        Unirse al equipo
+                    </a>
+                {% elif invitacion_vs and invitacion_vs.aceptada %}
+                    <p class="text-success">Ya estás en el equipo {{ invitacion_vs.equipo }}.</p>
+                {% else %}
+                    <p class="text-muted">Debes ser invitado por un capitán para unirte a este partido.</p>
+                {% endif %}
+            {% else %}
+                <a href="{{ url_for('unirse_partido', partido_id=partido.id) }}" class="btn btn-primary">Unirse al partido</a>
+            {% endif %}
+        {% else %}
+            <p class="text-muted">Este partido es privado. Necesitas una invitación para unirte.</p>
         {% endif %}
+
+        {# ✅ Capitanes de VS pueden invitar jugadores #}
+        {% if es_vs and partido.vs %}
+            {% if current_user.id in [partido.vs.capitan_equipo1_id, partido.vs.capitan_equipo2_id] %}
+                <a href="{{ url_for('invitar_vs', partido_id=partido.id) }}" class="btn btn-outline-success mt-3">
+                    <i class="bi bi-person-plus"></i> Invitar jugadores a mi equipo
+                </a>
+            {% endif %}
+        {% endif %}
+
     {% endif %}
 
-        <div class="mt-4">
-            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left"></i> Volver al listado</a>
-        </div>
+    <div class="mt-4">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al listado
+        </a>
     </div>
 </div>
 

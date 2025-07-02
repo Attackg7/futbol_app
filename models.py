@@ -23,7 +23,8 @@ class User(UserMixin, db.Model):
     telefono = db.Column(db.String(20))
     email_confirmado = db.Column(db.Boolean, default=False)
     token_confirmacion = db.Column(db.String(100), nullable=True)
-
+    invitaciones_vs_recibidas = db.relationship('InvitacionVS',foreign_keys='InvitacionVS.invitado_id',backref='invitado_vs',lazy='dynamic'
+)
     calificaciones_recibidas = db.relationship(
         'Calificacion', foreign_keys='Calificacion.evaluado_id',
         back_populates='evaluado', lazy='dynamic'
@@ -91,6 +92,7 @@ class Partido(db.Model):
     foto_perfil = db.Column(db.String(120), nullable=False, default='default.jpg')
     latitud = db.Column(db.Float)
     longitud = db.Column(db.Float)
+    modo_juego = db.Column(db.String(20), default='LIBRE')
 
     organizador_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     organizador = db.relationship('User', back_populates='partidos_creados')
@@ -98,6 +100,12 @@ class Partido(db.Model):
     inscripciones = db.relationship('Inscripcion', back_populates='partido', cascade="all, delete-orphan")
     calificaciones = db.relationship('Calificacion', backref='partido', lazy='dynamic', cascade="all, delete-orphan")
 
+    partido_vs = db.relationship(
+    'PartidoVS',
+    back_populates='partido',
+    cascade='all, delete-orphan',
+    uselist=False
+    )
     def tiempo_limite(self):
         return self.fecha_hora + timedelta(hours=12)
 
@@ -198,3 +206,34 @@ class Notificacion(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     usuario = db.relationship('User', backref='notificaciones')
+
+class PartidoVS(db.Model):
+    __tablename__ = 'partido_vs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    partido_id = db.Column(db.Integer, db.ForeignKey('partido.id'), unique=True, nullable=False)
+    capitan_equipo1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    capitan_equipo2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    partido = db.relationship('Partido', backref=db.backref(
+        'vs',
+        uselist=False,
+        cascade='all, delete-orphan'
+    ))
+
+    capitan_equipo1 = db.relationship('User', foreign_keys=[capitan_equipo1_id])
+    capitan_equipo2 = db.relationship('User', foreign_keys=[capitan_equipo2_id])
+
+class InvitacionVS(db.Model):
+    __tablename__ = 'invitacion_vs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    partido_id = db.Column(db.Integer, db.ForeignKey('partido.id'), nullable=False)
+    invitado_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    equipo = db.Column(db.String(100), nullable=False)  # equipo1 o equipo2
+    capitan_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    aceptada = db.Column(db.Boolean, default=False)
+
+    invitado = db.relationship('User', foreign_keys=[invitado_id])
+    capitan = db.relationship('User', foreign_keys=[capitan_id])
+    partido = db.relationship('Partido', backref='invitaciones_vs')

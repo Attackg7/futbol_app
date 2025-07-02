@@ -41,4 +41,14 @@ recordatorio
 -en el base.html quitar el boton de mi perfil y que ese boton sea el icono de foto con el nombre . Listo
 - en las tarjetas de partidos en index cuando un partido este cerrado debe mostrar el mensaje de partido cerrado no que ya estas inscrito si lo estas.- Listo
 -- boton de volver a la pestaña anterior debe quedar en el Base.html -- Listo
--- boton de ubicacion de canchas .. 
+-- boton de ubicacion de canchas .. listotree -listo
+-- el modo libre cuando ya se encuentren todos los jugadores inscritos o almenos el  70 %  tenga un boton que organice los dos equipos al azar con las personas inscritas .
+
+
+pendientes actuales
+
+modo de juego vs
+
+probar creacion de partidos modo vs 
+que la invitacion llegue a los capitanes y probar que ellos puedan invitar personas para sus equipos
+crear varias cuentas para prueba
