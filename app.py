@@ -6,7 +6,6 @@ from models import db, User, Partido, Inscripcion, Calificacion, Amistad, Invita
 import os
 from werkzeug.utils import secure_filename
 import uuid
-from datetime import datetime, timezone
 from models import Notificacion
 from flask_migrate import Migrate
 from dotenv import load_dotenv
@@ -16,7 +15,8 @@ from flask_mail import Mail, Message
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 import sqlite3
-from pytz import timezone
+from datetime import datetime, timezone as dt_timezone
+from pytz import timezone as pytz_timezone
 
 
 app = Flask(__name__)
@@ -30,9 +30,8 @@ app.config['MAIL_DEFAULT_SENDER'] = 'davstegonzalez@gmail.com'
 
 
 mail = Mail(app)
+colombia_tz = pytz_timezone('America/Bogota')
 
-zona_colombia = timezone('America/Bogota')
-now = datetime.now(zona_colombia)
 load_dotenv()
 
 app.secret_key = '123456'
@@ -138,7 +137,7 @@ def inicio():
                 return redirect(url_for('inicio'))
             error = "Usuario no encontrado"
 
-    return render_template("inicio.html", error=error, now=datetime.now())
+    return render_template("inicio.html", error=error, now = datetime.now(colombia_tz))
 
 
 
@@ -149,34 +148,48 @@ def mostrar_mensaje_si_redirigido():
             flash("Primero debes iniciar sesión para acceder a esa página.", "warning")
 
 
-from pytz import utc
-
 @app.route('/eventos')
 def index():
     partidos = Partido.query.order_by(Partido.fecha_hora.desc()).all()
     datos_partidos = []
-    now = datetime.now(utc)  # ✅ datetime "aware" en UTC
+
+    colombia_tz = pytz_timezone('America/Bogota')
+    now = datetime.now(colombia_tz)  # ✅ Fecha actual con tz Colombia
 
     for partido in partidos:
         try:
+            print("===== Procesando partido =====")
+            print(f"ID: {partido.id}")
+            print(f"Fecha original (sin tz): {partido.fecha_hora} (tz: {partido.fecha_hora.tzinfo})")
+
+            # ✅ Convertir partido.fecha_hora a "aware" con zona horaria Colombia
+            if partido.fecha_hora.tzinfo is None:
+                partido_fecha = colombia_tz.localize(partido.fecha_hora)
+            else:
+                partido_fecha = partido.fecha_hora.astimezone(colombia_tz)
+
+            print(f"Fecha con tz Colombia: {partido_fecha}")
+            print(f"Ahora en Colombia: {now}")
+
+            tiempo_desde_inicio = (now - partido_fecha).total_seconds()
+            ha_empezado = partido_fecha <= now
+            ha_pasado_10_min = tiempo_desde_inicio >= 600
+            ha_pasado_2_horas = tiempo_desde_inicio >= 7200
+            ha_pasado_24_horas = tiempo_desde_inicio >= 86400
+
             inscripciones = partido.inscripciones
             count_total = len(inscripciones)
             total_requerido = partido.max_jugadores * 2
             porcentaje_actual = count_total / total_requerido if total_requerido > 0 else 0
 
-            tiempo_desde_inicio = (now - partido.fecha_hora).total_seconds()
-            ha_empezado = partido.fecha_hora <= now
-            ha_pasado_10_min = tiempo_desde_inicio >= 600
-            ha_pasado_2_horas = tiempo_desde_inicio >= 7200
-            ha_pasado_24_horas = tiempo_desde_inicio >= 86400
-
             cancelado_por_falta = False
 
             if not partido.cerrado and ha_empezado and porcentaje_actual < 0.7:
                 if ha_pasado_10_min:
+                    print(f"[BORRANDO] Partido ID {partido.id} eliminado: menos del 70% inscritos y pasaron 10 minutos")
                     db.session.delete(partido)
                     db.session.commit()
-                    continue  # ya fue eliminado
+                    continue
                 else:
                     partido.cancelado = True
                     cancelado_por_falta = True
@@ -231,32 +244,9 @@ def index():
             })
 
         except Exception as e:
-            db.session.rollback()
-            print(f"❌ Error procesando partido ID {partido.id}: {e}")
+            print(f"Error procesando partido ID {partido.id}: {e}")
 
-    # Clasificar
-    proximos = []
-    en_curso = []
-    terminados = []
-
-    for datos in datos_partidos:
-        partido = datos['partido']
-        cancelado = datos['cancelado_por_falta']
-        porcentaje = datos['porcentaje_inscritos']
-        ya_empezo = partido.fecha_hora <= now
-
-        if cancelado or partido.cancelado:
-            terminados.append(datos)
-        elif partido.cerrado or partido.resultado:
-            terminados.append(datos)
-        elif ya_empezo and porcentaje >= 0.7:
-            en_curso.append(datos)
-        else:
-            proximos.append(datos)
-
-    datos_partidos = proximos + en_curso + terminados
-
-    return render_template('index.html', datos_partidos=datos_partidos, now=now)
+    return render_template("index.html", datos_partidos=datos_partidos)
 
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -443,13 +433,14 @@ def editar_resultado(partido_id):
 
     return render_template('registrar_resultado.html', partido=partido)
 
+
+
 @app.route('/partido/<int:partido_id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar_partido(partido_id):
     partido = Partido.query.get_or_404(partido_id)
 
-    zona_colombia = timezone('America/Bogota')
-    now = datetime.now(zona_colombia)
+    now = datetime.now(colombia_tz)
 
     if partido.cerrado:
         flash("Este partido ya fue cerrado y no puede ser editado.")
@@ -624,6 +615,12 @@ def inject_notificaciones():
         'solicitudes_count': 0,
         'invitaciones_count': 0
     }
+from pytz import timezone
+
+@app.context_processor
+def inject_now():
+    colombia_now = datetime.now(pytz_timezone('America/Bogota')).replace(tzinfo=None)
+    return {'now': colombia_now}
 
 from flask import jsonify
 
@@ -1172,14 +1169,14 @@ def ajax_rechazar_amistad(solicitud_id):
 
 @app.route('/hora-local')
 def hora_local():
-    return f"Hora local detectada por Flask: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    colombia_tz = timezone('America/Bogota')
+    now_colombia = datetime.now(colombia_tz)
+    return f"Hora en Colombia: {now_colombia.strftime('%Y-%m-%d %H:%M:%S')}"
 
 #modo de juego
 @app.route('/modo_juego')
 def modo_juego():
     return render_template('modo_juego.html')
-
-from pytz import timezone, utc
 
 @app.route('/crear', methods=['GET', 'POST'])
 @login_required
@@ -1187,60 +1184,47 @@ def crear_partido():
     amigos = current_user.obtener_amigos()
 
     if request.method == 'POST':
-        try:
-            fecha_str = request.form['fecha']
-            hora_str = request.form['hora']
-            fecha_hora = datetime.strptime(f"{fecha_str} {hora_str}", "%Y-%m-%d %H:%M")
+        fecha_str = request.form['fecha']
+        hora_str = request.form['hora']
+        fecha_hora = datetime.strptime(f"{fecha_str} {hora_str}", "%Y-%m-%d %H:%M")
+        solo_por_invitacion = 'solo_por_invitacion' in request.form
+        
 
-            # 🕒 Convertir a zona horaria Colombia y luego a UTC
-            zona_colombia = timezone('America/Bogota')
-            fecha_hora_colombia = zona_colombia.localize(fecha_hora)
-            fecha_hora_utc = fecha_hora_colombia.astimezone(utc)
+        nuevo_partido = Partido(
+            fecha_hora=fecha_hora,
+            lugar=request.form['lugar'],
+            latitud=float(request.form['latitud']) if request.form['latitud'] else None,
+            longitud=float(request.form['longitud']) if request.form['longitud'] else None,
+            equipo1=request.form['equipo1'],
+            equipo2=request.form['equipo2'],
+            max_jugadores=int(request.form['max_jugadores']),
+            organizador_id=current_user.id,
+            solo_por_invitacion=solo_por_invitacion
+        )
 
-            solo_por_invitacion = 'solo_por_invitacion' in request.form
+        # ✅ Generar siempre el enlace para el organizador
+        nuevo_partido.generar_enlace_unico()
 
-            nuevo_partido = Partido(
-                fecha_hora=fecha_hora_utc,
-                lugar=request.form['lugar'],
-                latitud=float(request.form['latitud']) if request.form['latitud'] else None,
-                longitud=float(request.form['longitud']) if request.form['longitud'] else None,
-                equipo1=request.form['equipo1'],
-                equipo2=request.form['equipo2'],
-                max_jugadores=int(request.form['max_jugadores']),
-                organizador_id=current_user.id,
-                solo_por_invitacion=solo_por_invitacion
-            )
+        db.session.add(nuevo_partido)
+        db.session.commit()
 
-            nuevo_partido.generar_enlace_unico()
-            db.session.add(nuevo_partido)
-            db.session.commit()
+        # Guardar invitaciones
+        invitados_ids = request.form.getlist('invitados')
+        for uid in invitados_ids:
+            invitacion = Invitacion(partido_id=nuevo_partido.id, usuario_id=int(uid))
+            db.session.add(invitacion)
+        db.session.commit()
 
-            invitados_ids = request.form.getlist('invitados')
-            for uid in invitados_ids:
-                invitacion = Invitacion(partido_id=nuevo_partido.id, usuario_id=int(uid))
-                db.session.add(invitacion)
-            db.session.commit()
+        return redirect(url_for('detalle_partido', partido_id=nuevo_partido.id))
 
-            return redirect(url_for('detalle_partido', partido_id=nuevo_partido.id))
-
-        except Exception as e:
-            db.session.rollback()
-            print("❌ Error al crear partido:", e)
-            flash("Ocurrió un error al crear el partido. Intenta nuevamente.", "danger")
-            return render_template(
-                'crear_partido.html',
-                amigos=amigos,
-                google_maps_key=current_app.config['GOOGLE_MAPS_API_KEY'],
-                datos_guardados=request.form
-            )
-
+    # 👇 aquí es donde pasas la clave a la plantilla
     return render_template(
         'crear_partido.html',
         amigos=amigos,
         google_maps_key=current_app.config['GOOGLE_MAPS_API_KEY']
     )
-
-from pytz import timezone, utc
+def get_amigos_actuales():
+    return current_user.amigos  # o como lo tengas implementado
 
 @app.route('/crear_partido/vs', methods=['GET', 'POST'])
 @login_required
@@ -1252,16 +1236,12 @@ def crear_partido_vs():
             fecha_str = request.form['fecha']
             hora_str = request.form['hora']
             fecha_hora = datetime.strptime(f"{fecha_str} {hora_str}", "%Y-%m-%d %H:%M")
-
-            # Convertir a zona horaria Colombia y luego a UTC
-            zona_colombia = timezone('America/Bogota')
-            fecha_hora_colombia = zona_colombia.localize(fecha_hora)
-            fecha_hora_utc = fecha_hora_colombia.astimezone(utc)
-
             solo_por_invitacion = 'solo_por_invitacion' in request.form
+
             cap1_id = int(request.form['capitan_equipo1'])
             cap2_id = int(request.form['capitan_equipo2'])
 
+            # ⚠️ Validación antes de crear el partido
             if cap1_id == cap2_id:
                 flash("Un jugador no puede ser capitán de ambos equipos.", "warning")
                 return render_template(
@@ -1271,8 +1251,9 @@ def crear_partido_vs():
                     datos_guardados=request.form
                 )
 
+            # ✅ Crear partido solo si capitanes son distintos
             nuevo_partido = Partido(
-                fecha_hora=fecha_hora_utc,
+                fecha_hora=fecha_hora,
                 lugar=request.form['lugar'],
                 latitud=float(request.form['latitud']) if request.form['latitud'] else None,
                 longitud=float(request.form['longitud']) if request.form['longitud'] else None,
@@ -1285,7 +1266,7 @@ def crear_partido_vs():
             )
             nuevo_partido.generar_enlace_unico()
             db.session.add(nuevo_partido)
-            db.session.flush()
+            db.session.flush()  # Aún no se guarda en DB, pero obtenemos ID
 
             partido_vs = PartidoVS(
                 partido_id=nuevo_partido.id,
@@ -1294,6 +1275,7 @@ def crear_partido_vs():
             )
             db.session.add(partido_vs)
 
+            # 🔁 Inscripción o invitación a capitanes
             if cap1_id == current_user.id:
                 db.session.add(Inscripcion(user_id=current_user.id, partido_id=nuevo_partido.id, equipo=nuevo_partido.equipo1))
             else:
@@ -1304,6 +1286,7 @@ def crear_partido_vs():
             else:
                 db.session.add(InvitacionVS(partido_id=nuevo_partido.id, invitado_id=cap2_id, capitan_id=cap2_id, equipo=nuevo_partido.equipo2))
 
+            # 🔁 Invitaciones normales
             invitados_ids = request.form.getlist('invitados')
             for uid in invitados_ids:
                 db.session.add(Invitacion(
@@ -1326,6 +1309,7 @@ def crear_partido_vs():
                 datos_guardados=request.form
             )
 
+    # GET request
     return render_template(
         'crear_partido_vs.html',
         amigos=amigos,
