@@ -6,3 +6,4 @@ gunicorn
 flask_migrate
 python-dotenv
 Flask-Mail
+pytz
