@@ -491,92 +491,110 @@
   {% endif %}
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const searchInput = document.getElementById("busquedaInput");
-      const fechaFiltro = document.getElementById("fechaFiltro");
-      const lugarFiltro = document.getElementById("lugarFiltro");
-      const estadoFiltro = document.getElementById("estadoFiltro");
+  document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("busquedaInput");
+    const fechaFiltro = document.getElementById("fechaFiltro");
+    const lugarFiltro = document.getElementById("lugarFiltro");
+    const estadoFiltro = document.getElementById("estadoFiltro");
+    const cards = document.querySelectorAll(".partido-card");
+
+    function ordenarPartidosPorFecha() {
+      const container = document.querySelector(".row.row-cols-1");
+      const cardsArray = Array.from(container.querySelectorAll(".partido-card"));
+
+      cardsArray.sort((a, b) => {
+        const fechaA = new Date(a.dataset.fechaHora);
+        const fechaB = new Date(b.dataset.fechaHora);
+        return fechaA - fechaB; // Orden ascendente
+      });
+
+      cardsArray.forEach((card) => container.appendChild(card));
+    }
+
+    function filtrarPartidos() {
+      const texto = searchInput.value.toLowerCase();
+      const fecha = fechaFiltro.value;
+      const lugar = lugarFiltro.value.toLowerCase();
+      const estado = estadoFiltro.value;
+
+      cards.forEach((card) => {
+        const equipo1 = card.dataset.equipo1;
+        const equipo2 = card.dataset.equipo2;
+        const cardLugar = card.dataset.lugar;
+        const cardFecha = card.dataset.fecha;
+        const cardEstado = card.dataset.estado;
+
+        const coincideBusqueda =
+          equipo1.includes(texto) ||
+          equipo2.includes(texto) ||
+          cardLugar.includes(texto);
+        const coincideFecha = !fecha || cardFecha === fecha;
+        const coincideLugar = !lugar || cardLugar === lugar;
+        const coincideEstado = !estado || cardEstado === estado;
+
+        card.style.display =
+          coincideBusqueda && coincideFecha && coincideLugar && coincideEstado
+            ? "block"
+            : "none";
+      });
+
+      ordenarPartidosPorFecha();
+    }
+
+    searchInput.addEventListener("input", filtrarPartidos);
+    fechaFiltro.addEventListener("change", filtrarPartidos);
+    lugarFiltro.addEventListener("change", filtrarPartidos);
+    estadoFiltro.addEventListener("change", filtrarPartidos);
+
+    ordenarPartidosPorFecha(); // Orden inicial al cargar
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const updateEstados = () => {
       const cards = document.querySelectorAll(".partido-card");
 
-      function filtrarPartidos() {
-        const texto = searchInput.value.toLowerCase();
-        const fecha = fechaFiltro.value;
-        const lugar = lugarFiltro.value.toLowerCase();
-        const estado = estadoFiltro.value;
+      cards.forEach((card) => {
+        const estadoEtiqueta = card.querySelector(".estado-etiqueta");
+        const fechaStr = card.dataset.fechaHora;
+        const cerrado = card.dataset.cerrado === "true";
+        const cancelado = card.dataset.cancelado === "true";
+        const porcentaje = parseFloat(card.dataset.porcentaje || "0");
 
-        cards.forEach((card) => {
-          const equipo1 = card.dataset.equipo1;
-          const equipo2 = card.dataset.equipo2;
-          const cardLugar = card.dataset.lugar;
-          const cardFecha = card.dataset.fecha;
-          const cardEstado = card.dataset.estado;
+        if (!fechaStr || !estadoEtiqueta) return;
 
-          const coincideBusqueda =
-            equipo1.includes(texto) ||
-            equipo2.includes(texto) ||
-            cardLugar.includes(texto);
-          const coincideFecha = !fecha || cardFecha === fecha;
-          const coincideLugar = !lugar || cardLugar === lugar;
-          const coincideEstado = !estado || cardEstado === estado;
+        const resultado = card.dataset.resultado?.trim();
+        const tieneResultado = resultado && resultado !== "" && resultado !== "null";
 
-          card.style.display =
-            coincideBusqueda && coincideFecha && coincideLugar && coincideEstado
-              ? "block"
-              : "none";
-        });
-      }
+        const fechaPartido = new Date(fechaStr);
+        const ahora = new Date();
+        const diffMin = (ahora - fechaPartido) / (1000 * 60);
 
-      searchInput.addEventListener("input", filtrarPartidos);
-      fechaFiltro.addEventListener("change", filtrarPartidos);
-      lugarFiltro.addEventListener("change", filtrarPartidos);
-      estadoFiltro.addEventListener("change", filtrarPartidos);
-    });
+        let nuevoEstado = "";
+        let claseNueva = "";
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const updateEstados = () => {
-        const cards = document.querySelectorAll(".partido-card");
+        if (cancelado) {
+          nuevoEstado = "Cancelado";
+          claseNueva = "bg-danger";
+        } else if (cerrado && tieneResultado) {
+          nuevoEstado = "Terminado";
+          claseNueva = "terminado";
+        } else if (diffMin >= 0 && porcentaje >= 0.7) {
+          nuevoEstado = "En curso";
+          claseNueva = "en-curso";
+        } else {
+          nuevoEstado = "Próximamente";
+          claseNueva = "proximo";
+        }
 
-        cards.forEach((card) => {
-          const estadoEtiqueta = card.querySelector(".estado-etiqueta");
-          const fechaStr = card.dataset.fechaHora;
-          const cerrado = card.dataset.cerrado === "true";
-          const cancelado = card.dataset.cancelado === "true";
-          const porcentaje = parseFloat(card.dataset.porcentaje || "0");
+        estadoEtiqueta.textContent = nuevoEstado;
+        estadoEtiqueta.className = "estado-etiqueta " + claseNueva;
+        card.dataset.estado = claseNueva;
+      });
+    };
 
-          if (!fechaStr || !estadoEtiqueta) return;
+    updateEstados();
+    setInterval(updateEstados, 60000); // cada minuto
+  });
+</script>
 
-          const resultado = card.dataset.resultado?.trim();
-          const tieneResultado = resultado && resultado !== "" && resultado !== "null";
-
-          const fechaPartido = new Date(fechaStr);
-          const ahora = new Date();
-          const diffMin = (ahora - fechaPartido) / (1000 * 60);
-
-          let nuevoEstado = "";
-          let claseNueva = "";
-
-          if (cancelado) {
-            nuevoEstado = "Cancelado";
-            claseNueva = "bg-danger";
-          } else if (cerrado && tieneResultado) {
-            nuevoEstado = "Terminado";
-            claseNueva = "terminado";
-          } else if (diffMin >= 0 && porcentaje >= 0.7) {
-            nuevoEstado = "En curso";
-            claseNueva = "en-curso";
-          } else {
-            nuevoEstado = "Próximamente";
-            claseNueva = "proximo";
-          }
-
-          estadoEtiqueta.textContent = nuevoEstado;
-          estadoEtiqueta.className = "estado-etiqueta " + claseNueva;
-          card.dataset.estado = claseNueva;
-        });
-      };
-
-      updateEstados();
-      setInterval(updateEstados, 60000); // cada minuto
-    });
-  </script>
 {% endblock %}

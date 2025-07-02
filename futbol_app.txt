@@ -31,13 +31,13 @@ recordatorio
 -que las invitaciones se puedan realizar a cualquier usuario sin necesidad de ser amigo- LISTO
 - al crear un partido dejar la opcion de que el creador Tambien pueda unirse- Listo
 -que se pueda enviar link de invitaccion al evento SI EL EVENTO NO ES SOLO PARA INVITADOS.--listo
-- que el enlace ya no funcione si el partido ha empezado tener en cuenta la hora de inicio del evento.-- Pendiente
+- que el enlace ya no funcione si el partido ha empezado tener en cuenta la hora de inicio del evento.-- listo
 -icono de notificacion pendiente por revisar -- parecido a facebook cuando tengo una notificacion pero esta vez cuando el usuario reciba una solicitud de un partido o invitacion de amigos  ---Listo
 -login por correo electronico con confirmacion -- Pendiente
 -cuando la persona acepta la invitacion al partido , tenga la opcion de escoger a que equipo se quiere unir-- Listo
 -recordatorio de partidos o eventos un dia antes y el dia del partido  8 horas antes por correo--Pendiente
 -invitaciones de amigo y partidos se notifiquen por correo y que  tenga un enlace que refirija a la pagina para ingresar a web . Pendiente
--modo de juego vs -- donde se crea el evento por el creador, el creador debe invitar a dos capitanes uno para cada equipo (el creador puede ser capitan o invitar a dos personas diferentes para ser capitanes ), cada capitan va a un equipo diferente, capitan equipo 1 puede invitar amigos para su equipo y capitan 2 puede invitar amigos para su equipo (los capitanes no podran invitar un jugador que ya se encuentre en alguno de los equiops).
+-modo de juego vs -- donde se crea el evento por el creador, el creador debe invitar a dos capitanes uno para cada equipo (el creador puede ser capitan o invitar a dos personas diferentes para ser capitanes ), cada capitan va a un equipo diferente, capitan equipo 1 puede invitar amigos para su equipo y capitan 2 puede invitar amigos para su equipo (los capitanes no podran invitar un jugador que ya se encuentre en alguno de los equiops). listo
 -en el base.html quitar el boton de mi perfil y que ese boton sea el icono de foto con el nombre . Listo
 - en las tarjetas de partidos en index cuando un partido este cerrado debe mostrar el mensaje de partido cerrado no que ya estas inscrito si lo estas.- Listo
 -- boton de volver a la pestaña anterior debe quedar en el Base.html -- Listo
@@ -47,8 +47,8 @@ recordatorio
 
 pendientes actuales
 
-modo de juego vs
+modo de juego vs listo
 
-probar creacion de partidos modo vs 
-que la invitacion llegue a los capitanes y probar que ellos puedan invitar personas para sus equipos
-crear varias cuentas para prueba
+probar creacion de partidos modo vs  listo
+que la invitacion llegue a los capitanes y probar que ellos puedan invitar personas para sus equipos listo
+crear varias cuentas para prueba listo
