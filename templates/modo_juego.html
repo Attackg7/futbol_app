@@ -2,46 +2,122 @@
 {% extends 'base.html' %}
 {% block title %}Modo de Juego{% endblock %}
 
+
 {% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+
+<style>
+    .titulo-modo {
+        color: #000;
+        font-family: 'Playfair Display', serif;
+        font-weight: 600;
+    }
+
+    .card-hover {
+        transition: all 0.3s ease;
+        border-radius: 15px;
+        overflow: hidden;
+        cursor: pointer;
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+        border: 2px solid transparent;
+    }
+
+    .card-hover img {
+        height: 200px;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .card-hover .btn {
+        transition: transform 0.3s ease;
+    }
+
+    /* 🔥 EFECTO HOVER - TODO FONDO VERDE */
+    .card-hover:hover {
+        background-color: #14532d !important;
+        border-color: #14532d !important;
+        box-shadow:
+            0 0 0 3px #14532d,
+            0 12px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-hover:hover h5,
+    .card-hover:hover p,
+    .card-hover:hover .btn {
+        color: white !important;
+    }
+
+    .card-hover:hover .btn {
+        border-color: white;
+    }
+
+    .card-hover:hover img {
+        transform: scale(1.05);
+        opacity: 0.7;
+    }
+
+</style>
+
 <div class="container py-5">
-    <h2 class="text-center mb-4 text-primary">Selecciona el Modo de Juego</h2>
+    <h2 class="text-center mb-5 titulo-modo">Selecciona el Modo de Juego</h2>
     <div class="row row-cols-1 row-cols-md-3 g-4 justify-content-center">
 
         <!-- MODO LIBRE -->
         <div class="col">
-            <div class="card h-100 shadow-sm border-primary">
+            <div class="card card-hover h-100 border-0" data-link="{{ url_for('crear_partido') }}">
+                <img src="https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=300"
+                     class="card-img-top" alt="Partido informal de fútbol">
                 <div class="card-body text-center">
-                    <h5 class="card-title text-primary">Modo Libre</h5>
-                    <p class="card-text">Partido abierto donde los jugadores se unen libremente.</p>
-                    <a href="{{ url_for('crear_partido') }}" class="btn btn-primary">Crear Modo Libre</a>
+                    <h5 class="card-title text-primary fw-bold">Modo Libre</h5>
+                    <p class="card-text">Partido abierto donde los jugadores se unen libremente, ideal para encuentros espontáneos.</p>
+                    <a href="{{ url_for('crear_partido') }}" class="btn btn-outline-primary mt-2">Crear Modo Libre</a>
                 </div>
             </div>
         </div>
 
         <!-- MODO VS -->
         <div class="col">
-            <div class="card h-100 shadow-sm border-danger">
+            <div class="card card-hover h-100 border-0" data-link="{{ url_for('crear_partido_vs') }}">
+                <img src="https://images.pexels.com/photos/274422/pexels-photo-274422.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=300"
+                     class="card-img-top" alt="Dos jugadores compitiendo">
                 <div class="card-body text-center">
-                    <h5 class="card-title text-danger">Modo VS</h5>
-                    <p class="card-text">Dos capitanes arman sus equipos por invitación.</p>
-                    <a href="{{ url_for('crear_partido_vs') }}" class="btn btn-danger">Crear Modo VS</a>
+                    <h5 class="card-title text-danger fw-bold">Modo VS</h5>
+                    <p class="card-text">Dos capitanes arman sus equipos por invitación. Competencia organizada entre grupos.</p>
+                    <a href="{{ url_for('crear_partido_vs') }}" class="btn btn-outline-danger mt-2">Crear Modo VS</a>
                 </div>
             </div>
         </div>
 
         <!-- MODO TORNEO -->
         <div class="col">
-            <div class="card h-100 shadow-sm border-success">
+            <div class="card card-hover h-100 border-0" data-link="{{ url_for('crear_partido_torneo') }}">
+                <img src="https://images.pexels.com/photos/9519538/pexels-photo-9519538.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=300"
+                     class="card-img-top" alt="Trofeo de fútbol sobre césped">
                 <div class="card-body text-center">
-                    <h5 class="card-title text-success">Modo Torneo</h5>
-                    <p class="card-text">Organiza partidos dentro de un torneo.</p>
-                    <a href="{{ url_for('crear_partido_torneo') }}" class="btn btn-success">Crear Modo Torneo</a>
+                    <h5 class="card-title text-success fw-bold">Modo Torneo</h5>
+                    <p class="card-text">Organiza partidos dentro de un torneo. ¡Compite por la gloria y el trofeo!</p>
+                    <a href="{{ url_for('crear_partido_torneo') }}" class="btn btn-outline-success mt-2">Crear Modo Torneo</a>
                 </div>
             </div>
         </div>
 
     </div>
 </div>
+
+<script>
+    // Selección visual de tarjeta
+    document.querySelectorAll('.card-hover').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.card-hover').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+
+            // Opcional: redireccionar tras un pequeño delay
+            setTimeout(() => {
+                window.location.href = card.dataset.link;
+            }, 200); // puedes ajustar o quitar el timeout
+        });
+    });
+</script>
 {% endblock %}
 
 
