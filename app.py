@@ -16,6 +16,7 @@ from flask_mail import Mail, Message
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 import sqlite3
+from pytz import timezone
 
 
 app = Flask(__name__)
@@ -30,7 +31,8 @@ app.config['MAIL_DEFAULT_SENDER'] = 'davstegonzalez@gmail.com'
 
 mail = Mail(app)
 
-now = datetime.now()
+zona_colombia = timezone('America/Bogota')
+now = datetime.now(zona_colombia)
 load_dotenv()
 
 app.secret_key = '123456'
@@ -151,17 +153,22 @@ def mostrar_mensaje_si_redirigido():
 def index():
     partidos = Partido.query.order_by(Partido.fecha_hora.desc()).all()
     datos_partidos = []
-    now = datetime.now()
+
+    zona_colombia = timezone('America/Bogota')
+    now = datetime.now(zona_colombia)
 
     for partido in partidos:
         try:
+            # Convertir la hora del partido a la zona horaria Colombia
+            fecha_local = partido.fecha_hora.astimezone(zona_colombia)
+
             inscripciones = partido.inscripciones
             count_total = len(inscripciones)
             total_requerido = partido.max_jugadores * 2
             porcentaje_actual = count_total / total_requerido if total_requerido > 0 else 0
 
-            tiempo_desde_inicio = (now - partido.fecha_hora).total_seconds()
-            ha_empezado = partido.fecha_hora <= now
+            tiempo_desde_inicio = (now - fecha_local).total_seconds()
+            ha_empezado = fecha_local <= now
             ha_pasado_10_min = tiempo_desde_inicio >= 600
             ha_pasado_2_horas = tiempo_desde_inicio >= 7200
             ha_pasado_24_horas = tiempo_desde_inicio >= 86400
@@ -172,7 +179,7 @@ def index():
                 if ha_pasado_10_min:
                     db.session.delete(partido)
                     db.session.commit()
-                    continue  # ya fue eliminado
+                    continue
                 else:
                     partido.cancelado = True
                     cancelado_por_falta = True
@@ -230,7 +237,7 @@ def index():
             db.session.rollback()
             print(f"❌ Error procesando partido ID {partido.id}: {e}")
 
-    # Clasificar
+    # Clasificar partidos
     proximos = []
     en_curso = []
     terminados = []
@@ -239,7 +246,8 @@ def index():
         partido = datos['partido']
         cancelado = datos['cancelado_por_falta']
         porcentaje = datos['porcentaje_inscritos']
-        ya_empezo = partido.fecha_hora <= now
+        fecha_local = partido.fecha_hora.astimezone(zona_colombia)
+        ya_empezo = fecha_local <= now
 
         if cancelado or partido.cancelado:
             terminados.append(datos)
@@ -253,7 +261,6 @@ def index():
     datos_partidos = proximos + en_curso + terminados
 
     return render_template('index.html', datos_partidos=datos_partidos, now=now)
-
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = 'static/profile_pics'
@@ -444,7 +451,8 @@ def editar_resultado(partido_id):
 def editar_partido(partido_id):
     partido = Partido.query.get_or_404(partido_id)
 
-    now = datetime.now()
+    zona_colombia = timezone('America/Bogota')
+    now = datetime.now(zona_colombia)
 
     if partido.cerrado:
         flash("Este partido ya fue cerrado y no puede ser editado.")
