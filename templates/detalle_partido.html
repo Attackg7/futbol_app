@@ -257,8 +257,9 @@
                             {% set jugadores = partido.inscripciones | selectattr("equipo", "equalto", equipo) | list %}
                             {% if jugadores %}
                                 {% for inscripcion in jugadores %}
-    {% set es_capitan_equipo1 = partido.vs and inscripcion.user.id == partido.vs.capitan_equipo1_id %}
-    {% set es_capitan_equipo2 = partido.vs and inscripcion.user.id == partido.vs.capitan_equipo2_id %}
+    {% set es_capitan_equipo1 = partido.partido_vs and inscripcion.user.id == partido.partido_vs.capitan_equipo1_id %}
+    {% set es_capitan_equipo2 = partido.partido_vs and inscripcion.user.id == partido.partido_vs.capitan_equipo2_id %}
+
     {% set es_capitan = es_capitan_equipo1 or es_capitan_equipo2 %}
     
     <li class="list-group-item d-flex justify-content-between align-items-center">
