@@ -6,3 +6,6 @@ gunicorn
 flask_migrate
 python-dotenv
 Flask-Mail
+Engine
+sqlite3
+event

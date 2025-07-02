@@ -104,8 +104,10 @@ class Partido(db.Model):
     'PartidoVS',
     back_populates='partido',
     cascade='all, delete-orphan',
+    passive_deletes=True,
     uselist=False
-    )
+)
+    
     def tiempo_limite(self):
         return self.fecha_hora + timedelta(hours=12)
 
@@ -211,24 +213,32 @@ class PartidoVS(db.Model):
     __tablename__ = 'partido_vs'
 
     id = db.Column(db.Integer, primary_key=True)
-    partido_id = db.Column(db.Integer, db.ForeignKey('partido.id'), unique=True, nullable=False)
+    
+    partido_id = db.Column(
+        db.Integer,
+        db.ForeignKey('partido.id', ondelete='CASCADE'),
+        nullable=False,
+        unique=True
+    )
+
     capitan_equipo1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     capitan_equipo2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-    partido = db.relationship('Partido', backref=db.backref(
-        'vs',
-        uselist=False,
-        cascade='all, delete-orphan'
-    ))
-
+    # Relaciones
+    partido = db.relationship('Partido', back_populates='partido_vs')
     capitan_equipo1 = db.relationship('User', foreign_keys=[capitan_equipo1_id])
     capitan_equipo2 = db.relationship('User', foreign_keys=[capitan_equipo2_id])
 
+    
 class InvitacionVS(db.Model):
     __tablename__ = 'invitacion_vs'
 
     id = db.Column(db.Integer, primary_key=True)
-    partido_id = db.Column(db.Integer, db.ForeignKey('partido.id'), nullable=False)
+    partido_id = db.Column(
+        db.Integer,
+        db.ForeignKey('partido.id', ondelete='CASCADE'),
+        nullable=False
+    )
     invitado_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     equipo = db.Column(db.String(100), nullable=False)  # equipo1 o equipo2
     capitan_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -236,4 +246,7 @@ class InvitacionVS(db.Model):
 
     invitado = db.relationship('User', foreign_keys=[invitado_id])
     capitan = db.relationship('User', foreign_keys=[capitan_id])
-    partido = db.relationship('Partido', backref='invitaciones_vs')
+    partido = db.relationship(
+        'Partido',
+        backref=db.backref('invitaciones_vs', passive_deletes=True)
+    )

@@ -13,6 +13,9 @@ from dotenv import load_dotenv
 from flask import current_app
 import secrets
 from flask_mail import Mail, Message
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+import sqlite3
 
 
 app = Flask(__name__)
@@ -50,7 +53,12 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Página principal
-
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 def send_email(to, subject, body):
     msg = Message(subject, recipients=[to], body=body, sender="tu_correo@example.com")
@@ -1221,7 +1229,20 @@ def crear_partido_vs():
             fecha_hora = datetime.strptime(f"{fecha_str} {hora_str}", "%Y-%m-%d %H:%M")
             solo_por_invitacion = 'solo_por_invitacion' in request.form
 
-            # Crear partido base
+            cap1_id = int(request.form['capitan_equipo1'])
+            cap2_id = int(request.form['capitan_equipo2'])
+
+            # ⚠️ Validación antes de crear el partido
+            if cap1_id == cap2_id:
+                flash("Un jugador no puede ser capitán de ambos equipos.", "warning")
+                return render_template(
+                    'crear_partido_vs.html',
+                    amigos=amigos,
+                    google_maps_key=current_app.config['GOOGLE_MAPS_API_KEY'],
+                    datos_guardados=request.form
+                )
+
+            # ✅ Crear partido solo si capitanes son distintos
             nuevo_partido = Partido(
                 fecha_hora=fecha_hora,
                 lugar=request.form['lugar'],
@@ -1236,23 +1257,8 @@ def crear_partido_vs():
             )
             nuevo_partido.generar_enlace_unico()
             db.session.add(nuevo_partido)
-            db.session.commit()  # ✅ Para obtener nuevo_partido.id válido
+            db.session.flush()  # Aún no se guarda en DB, pero obtenemos ID
 
-            # Obtener capitanes
-            cap1_id = int(request.form['capitan_equipo1'])
-            cap2_id = int(request.form['capitan_equipo2'])
-
-            # ⚠️ Validar que no sea el mismo jugador
-            if cap1_id == cap2_id:
-                flash("Un jugador no puede ser capitán de ambos equipos.", "warning")
-                return render_template(
-                    'crear_partido_vs.html',
-                    amigos=amigos,
-                    google_maps_key=current_app.config['GOOGLE_MAPS_API_KEY'],
-                    datos_guardados=request.form
-                )
-
-            # Crear objeto PartidoVS
             partido_vs = PartidoVS(
                 partido_id=nuevo_partido.id,
                 capitan_equipo1_id=cap1_id,
@@ -1260,30 +1266,16 @@ def crear_partido_vs():
             )
             db.session.add(partido_vs)
 
-            # 🔁 Invitar o inscribir capitanes
+            # 🔁 Inscripción o invitación a capitanes
             if cap1_id == current_user.id:
-                inscripcion_1 = Inscripcion(user_id=current_user.id, partido_id=nuevo_partido.id, equipo=nuevo_partido.equipo1)
-                db.session.add(inscripcion_1)
+                db.session.add(Inscripcion(user_id=current_user.id, partido_id=nuevo_partido.id, equipo=nuevo_partido.equipo1))
             else:
-                invitacion_cap1 = InvitacionVS(
-                    partido_id=nuevo_partido.id,
-                    invitado_id=cap1_id,
-                    capitan_id=cap1_id,
-                    equipo=nuevo_partido.equipo1
-                )
-                db.session.add(invitacion_cap1)
+                db.session.add(InvitacionVS(partido_id=nuevo_partido.id, invitado_id=cap1_id, capitan_id=cap1_id, equipo=nuevo_partido.equipo1))
 
             if cap2_id == current_user.id:
-                inscripcion_2 = Inscripcion(user_id=current_user.id, partido_id=nuevo_partido.id, equipo=nuevo_partido.equipo2)
-                db.session.add(inscripcion_2)
+                db.session.add(Inscripcion(user_id=current_user.id, partido_id=nuevo_partido.id, equipo=nuevo_partido.equipo2))
             else:
-                invitacion_cap2 = InvitacionVS(
-                    partido_id=nuevo_partido.id,
-                    invitado_id=cap2_id,
-                    capitan_id=cap2_id,
-                    equipo=nuevo_partido.equipo2
-                )
-                db.session.add(invitacion_cap2)
+                db.session.add(InvitacionVS(partido_id=nuevo_partido.id, invitado_id=cap2_id, capitan_id=cap2_id, equipo=nuevo_partido.equipo2))
 
             # 🔁 Invitaciones normales
             invitados_ids = request.form.getlist('invitados')
@@ -1314,7 +1306,6 @@ def crear_partido_vs():
         amigos=amigos,
         google_maps_key=current_app.config['GOOGLE_MAPS_API_KEY']
     )
-
 
 @app.route('/crear_partido/torneo', methods=['GET', 'POST'])
 def crear_partido_torneo():

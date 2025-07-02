@@ -257,48 +257,57 @@
                             {% set jugadores = partido.inscripciones | selectattr("equipo", "equalto", equipo) | list %}
                             {% if jugadores %}
                                 {% for inscripcion in jugadores %}
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-    <div class="d-flex align-items-center">
-        <img src="{{ url_for('static', filename='profile_pics/' ~ inscripcion.user.foto_perfil) }}"
-             alt="Foto de {{ inscripcion.user.username }}"
-             class="rounded-circle me-3"
-             width="40" height="40">
-        <div>
-            <a href="{{ url_for('perfil_usuario', user_id=inscripcion.user.id) }}" class="fw-semibold">
-                {{ inscripcion.user.username }}
-            </a>
-            <div class="text-muted small">
-                {% set promedio = calificacion_jugador_en_partido(inscripcion.user, partido.id) %}
-                {% if promedio %}
-                    Promedio: {{ promedio }}/10
-                {% else %}
-                    Sin calificaciones
-                {% endif %}
+    {% set es_capitan_equipo1 = partido.vs and inscripcion.user.id == partido.vs.capitan_equipo1_id %}
+    {% set es_capitan_equipo2 = partido.vs and inscripcion.user.id == partido.vs.capitan_equipo2_id %}
+    {% set es_capitan = es_capitan_equipo1 or es_capitan_equipo2 %}
+    
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <img src="{{ url_for('static', filename='profile_pics/' ~ inscripcion.user.foto_perfil) }}"
+                 alt="Foto de {{ inscripcion.user.username }}"
+                 class="rounded-circle me-3"
+                 width="40" height="40">
+            <div>
+                <a href="{{ url_for('perfil_usuario', user_id=inscripcion.user.id) }}" class="fw-semibold">
+                    {% if es_capitan %}
+                        <span class="badge bg-primary me-1" title="Capitán" style="border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;">
+                            C
+                        </span>
+                    {% endif %}
+                    {{ inscripcion.user.username }}
+                </a>
+                <div class="text-muted small">
+                    {% set promedio = calificacion_jugador_en_partido(inscripcion.user, partido.id) %}
+                    {% if promedio %}
+                        Promedio: {{ promedio }}/10
+                    {% else %}
+                        Sin calificaciones
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Botón de calificación (si aplica) -->
-    <div>
-        {% if current_user.is_authenticated and inscripcion.user.id != current_user.id and ya_inscrito %}
-            {% set ya_calificado = inscripcion.user.calificaciones_recibidas
-                | selectattr("partido_id", "equalto", partido.id)
-                | selectattr("evaluador_id", "equalto", current_user.id)
-                | list | length > 0 %}
-            {% if partido.cerrado %}
-                {% if not ya_calificado %}
-                    <a href="{{ url_for('calificar_jugador_individual', partido_id=partido.id, jugador_id=inscripcion.user.id) }}"
-                       class="btn btn-outline-primary btn-sm">Calificar</a>
+        <!-- Botón de calificación -->
+        <div>
+            {% if current_user.is_authenticated and inscripcion.user.id != current_user.id and ya_inscrito %}
+                {% set ya_calificado = inscripcion.user.calificaciones_recibidas
+                    | selectattr("partido_id", "equalto", partido.id)
+                    | selectattr("evaluador_id", "equalto", current_user.id)
+                    | list | length > 0 %}
+                {% if partido.cerrado %}
+                    {% if not ya_calificado %}
+                        <a href="{{ url_for('calificar_jugador_individual', partido_id=partido.id, jugador_id=inscripcion.user.id) }}"
+                           class="btn btn-outline-primary btn-sm">Calificar</a>
+                    {% else %}
+                        <span class="text-success">Ya calificado</span>
+                    {% endif %}
                 {% else %}
-                    <span class="text-success">Ya calificado</span>
+                    <small class="text-muted">Disponible tras cierre</small>
                 {% endif %}
-            {% else %}
-                <small class="text-muted">Disponible tras cierre</small>
             {% endif %}
-        {% endif %}
-    </div>
-</li>
-                                {% endfor %}
+        </div>
+    </li>
+{% endfor %}
                             {% else %}
                                 <li class="list-group-item text-muted">No hay jugadores en este equipo.</li>
                             {% endif %}
@@ -450,8 +459,8 @@ function invitarUsuario(partidoId, userId) {
 
 <script>
   function initMap() {
-    const lat = {{ partido.latitud or 0 }};
-    const lng = {{ partido.longitud or 0 }};
+    const lat = parseFloat("{{ partido.latitud or 0 }}");
+    const lng = parseFloat("{{ partido.longitud or 0 }}");
 
     const mapElement = document.getElementById("map");
 
@@ -476,6 +485,7 @@ function invitarUsuario(partidoId, userId) {
       btnComoLlegar.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
     }
   }
+</script>
 
   window.initMap = initMap;
 </script>
