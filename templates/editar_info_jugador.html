@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Información del Jugador{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 600px;">
+  <h2 class="mb-4 text-center">✏️ Completar información del jugador</h2>
+
+  <form method="POST" action="{{ url_for('editar_info_jugador') }}">
+    <form method="POST" action="{{ url_for('editar_info_jugador') }}">
+
+<!-- Edad -->
+<div class="mb-3">
+  <label for="edad" class="form-label">Edad</label>
+  <input type="number" name="edad" class="form-control" value="{{ usuario.edad or '' }}" min="10" max="60">
+</div>
+    <!-- Posición principal -->
+    <div class="mb-3">
+      <label for="posicion" class="form-label">Posición principal</label>
+      <select name="posicion" class="form-select">
+        <option value="" disabled selected>Seleccionar</option>
+        <option value="Portero" {{ 'selected' if usuario.posicion == 'Portero' }}>Portero</option>
+        <option value="Defensa" {{ 'selected' if usuario.posicion == 'Defensa' }}>Defensa</option>
+        <option value="Mediocampista" {{ 'selected' if usuario.posicion == 'Mediocampista' }}>Mediocampista</option>
+        <option value="Delantero" {{ 'selected' if usuario.posicion == 'Delantero' }}>Delantero</option>
+      </select>
+    </div>
+
+    <!-- Posición secundaria -->
+    <div class="mb-3">
+      <label for="posicion_secundaria" class="form-label">Posición secundaria (opcional)</label>
+      <input type="text" name="posicion_secundaria" class="form-control" placeholder="Ej: Extremo izquierdo" value="{{ usuario.posicion_secundaria or '' }}">
+    </div>
+
+    <!-- Pie dominante -->
+    <div class="mb-3">
+      <label for="pie_dominante" class="form-label">Pie dominante</label>
+      <select name="pie_dominante" class="form-select">
+        <option value="" disabled selected>Seleccionar</option>
+        <option value="Derecho" {{ 'selected' if usuario.pie_dominante == 'Derecho' }}>Derecho</option>
+        <option value="Izquierdo" {{ 'selected' if usuario.pie_dominante == 'Izquierdo' }}>Izquierdo</option>
+        <option value="Ambos" {{ 'selected' if usuario.pie_dominante == 'Ambos' }}>Ambos</option>
+      </select>
+    </div>
+
+    <!-- Altura -->
+    <div class="mb-3">
+      <label for="altura" class="form-label">Altura (cm)</label>
+      <input type="number" name="altura" class="form-control" value="{{ usuario.altura or '' }}">
+    </div>
+
+    <!-- Peso -->
+    <div class="mb-3">
+      <label for="peso" class="form-label">Peso (kg)</label>
+      <input type="number" step="0.1" name="peso" class="form-control" value="{{ usuario.peso or '' }}">
+    </div>
+
+    <!-- Estado físico -->
+    <div class="mb-3">
+      <label for="estado_fisico" class="form-label">Estado físico actual</label>
+      <select name="estado_fisico" class="form-select">
+        <option value="" disabled selected>Seleccionar</option>
+        <option value="En forma" {{ 'selected' if usuario.estado_fisico == 'En forma' }}>En forma</option>
+        <option value="Lesionado" {{ 'selected' if usuario.estado_fisico == 'Lesionado' }}>Lesionado</option>
+        <option value="Recuperación" {{ 'selected' if usuario.estado_fisico == 'Recuperación' }}>Recuperación</option>
+      </select>
+    </div>
+
+    <!-- Nivel competitivo -->
+    <div class="mb-3">
+      <label for="nivel" class="form-label">Nivel competitivo</label>
+      <select name="nivel" class="form-select">
+        <option value="" disabled selected>Seleccionar</option>
+        <option value="Aficionado" {{ 'selected' if usuario.nivel == 'Aficionado' }}>Aficionado</option>
+        <option value="Semiprofesional" {{ 'selected' if usuario.nivel == 'Semiprofesional' }}>Semiprofesional</option>
+        <option value="Profesional" {{ 'selected' if usuario.nivel == 'Profesional' }}>Profesional</option>
+      </select>
+    </div>
+
+    <!-- Club actual -->
+    <div class="mb-3">
+      <label for="club_actual" class="form-label">Club actual o último equipo</label>
+      <input type="text" name="club_actual" class="form-control" placeholder="Ej: Atlético Nacional" value="{{ usuario.club_actual or '' }}">
+    </div>
+
+    <!-- Dorsal -->
+    <div class="mb-3">
+      <label for="dorsal" class="form-label">Número favorito / Dorsal habitual</label>
+      <input type="number" name="dorsal" class="form-control" value="{{ usuario.dorsal or '' }}">
+    </div>
+
+    <!-- Botón guardar -->
+    <div class="text-center">
+      <button type="submit" class="btn btn-success">💾 Guardar información</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

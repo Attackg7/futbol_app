@@ -1466,6 +1466,26 @@ def ajax_rechazar_invitacion_vs(invitacion_id):
     db.session.commit()
     return jsonify({'success': True})
 
+@app.route('/editar_info_jugador', methods=['GET', 'POST'])
+@login_required
+def editar_info_jugador():
+    if request.method == 'POST':
+        current_user.posicion = request.form.get('posicion')
+        current_user.posicion_secundaria = request.form.get('posicion_secundaria')
+        current_user.pie_dominante = request.form.get('pie_dominante')
+        current_user.altura = float(request.form.get('altura') or 0)
+        current_user.peso = float(request.form.get('peso') or 0)
+        current_user.estado_fisico = request.form.get('estado_fisico')
+        current_user.nivel = request.form.get('nivel')
+        current_user.club_actual = request.form.get('club_actual')
+        current_user.dorsal = int(request.form.get('dorsal') or 0)
+        current_user.edad = int(request.form.get('edad') or 0)  # si todavía usas este campo
+
+        db.session.commit()
+        flash("Información actualizada correctamente.", "success")
+        return redirect(url_for('perfil_usuario', user_id=current_user.id))
+
+    return render_template('editar_info_jugador.html', usuario=current_user)
 # Crear las tablas si no existen
 if __name__ == '__main__':
     with app.app_context():

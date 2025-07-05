@@ -3,26 +3,11 @@
 {% block content %}
 
 {% set descripciones = {
-    0.5: "Muy malo",
-    1.0: "Muy malo+",
-    1.5: "Malo",
-    2.0: "Malo+",
-    2.5: "Regular",
-    3.0: "Regular+",
-    3.5: "Aceptable",
-    4.0: "Aceptable+",
-    4.5: "Promedio",
-    5.0: "Promedio+",
-    5.5: "Bien",
-    6.0: "Bien+",
-    6.5: "Muy bien",
-    7.0: "Muy bien+",
-    7.5: "Excelente",
-    8.0: "Excelente+",
-    8.5: "Estrella",
-    9.0: "Estrella+",
-    9.5: "Top",
-    10.0: "¡Jugador excepcional!"
+    0.5: "Muy malo", 1.0: "Muy malo+", 1.5: "Malo", 2.0: "Malo+",
+    2.5: "Regular", 3.0: "Regular+", 3.5: "Aceptable", 4.0: "Aceptable+",
+    4.5: "Promedio", 5.0: "Promedio+", 5.5: "Bien", 6.0: "Bien+",
+    6.5: "Muy bien", 7.0: "Muy bien+", 7.5: "Excelente", 8.0: "Excelente+",
+    8.5: "Estrella", 9.0: "Estrella+", 9.5: "Top", 10.0: "¡Jugador excepcional!"
 } %}
 {% set promedio = usuario.promedio_calificaciones() | float %}
 {% set total_calificaciones = calificaciones | length %}
@@ -30,109 +15,137 @@
 {% set promedio_redondeado = promedio_aprox %}
 {% set descripcion = descripciones.get(promedio_aprox, 'Sin calificaciones') %}
 
-{% set badge_class = (
-    'light text-dark' if total_calificaciones == 0 else
-    'danger' if promedio_redondeado <= 2 else
-    'warning' if promedio_redondeado <= 4 else
-    'secondary' if promedio_redondeado <= 5.5 else
-    'info' if promedio_redondeado <= 7 else
-    'primary' if promedio_redondeado <= 8.5 else
-    'success'
-) %}
-{% set total_calificaciones = calificaciones | length %}
-
 <div class="container py-4">
-    <!-- Restriction messages moved outside the card -->
-    {% if not puede_ver_info %}
+  {% if not puede_ver_info %}
     <div class="alert alert-warning text-center mb-4">
-        Este perfil es privado. Solo los amigos pueden ver la información.
+      Este perfil es privado. Solo los amigos pueden ver la información.
     </div>
+  {% endif %}
 
-    {% if current_user.id != usuario.id %}
-  {% set ya_enviada = solicitudes|selectattr('usuario_id', 'equalto', current_user.id)|list|length > 0 %}
-  {% set ya_son_amigos = usuario in current_user.obtener_amigos() %}
-  <div id="amistad-container" class="text-center mb-4">
-    {% if ya_son_amigos %}
-      <button class="btn btn-success" disabled>Ya son amigos</button>
-    {% elif ya_enviada %}
-      <div class="alert alert-success">La solicitud fue enviada.</div>
-      <form id="form-cancelar" action="{{ url_for('cancelar_solicitud', user_id=usuario.id) }}" method="post">
-        <button class="btn btn-outline-danger" type="submit">Cancelar solicitud</button>
-      </form>
-    {% else %}
-      <form id="form-amistad" action="{{ url_for('agregar_amigo', user_id=usuario.id) }}" method="post">
-        <button type="submit" class="btn btn-primary">Enviar solicitud de amistad</button>
-      </form>
-    {% endif %}
-  </div>
-{% endif %}
+  <!-- Tarjeta giratoria -->
+  <div class="flip-card mx-auto mb-4">
+  <div class="flip-card-inner">
 
-    {% endif %}
-
-    <!-- Profile card -->
-<div class="fifa-card-fut position-relative text-center mx-auto mb-4">
-    
-    <!-- Promedio con mismo color que estrellas -->
-    <div class="fut-rating text-warning">
+    <!-- 🔵 Cara frontal: información visual FIFA -->
+    <div class="flip-card-front fifa-card-shared position-relative text-center">
+      <div class="fut-rating text-warning">
         {{ '{:.1f}'.format(promedio_redondeado).rstrip('0').rstrip('.') }}
-    </div>
-
-    <!-- Nombre en mismo color -->
-    <div class="fut-username text-warning">
+      </div>
+      <div class="fut-username text-warning">
         {{ usuario.username.split()[:2] | join(' ') }}
-    </div>
-
-    <!-- Bandera -->
-    <div class="fut-country">
-        <img src="{{ url_for('static', filename='images/flags/' ~ usuario.pais ~ '.png') }}" 
-             alt="{{ usuario.pais }}" title="{{ usuario.pais }}" class="flag-icon">
-    </div>
-
-    <!-- Foto de perfil -->
-    <img class="fut-photo" id="foto-perfil"
-         src="{{ url_for('static', filename=('images/default.jpg' if usuario.foto_perfil == 'default.jpg' else 'profile_pics/' ~ usuario.foto_perfil)) }}"
-         alt="Foto de perfil">
-
-    {% if current_user.id == usuario.id %}
-    <label for="foto_input" class="fut-edit-icon" title="Cambiar foto">
+      </div>
+      <div class="fut-country">
+        <img src="{{ url_for('static', filename='images/flags/' ~ usuario.pais ~ '.png') }}"
+             alt="{{ usuario.pais }}" class="flag-icon">
+      </div>
+      
+      <img class="fut-photo" id="foto-perfil"
+           src="{{ url_for('static', filename=('images/default.jpg' if usuario.foto_perfil == 'default.jpg' else 'profile_pics/' ~ usuario.foto_perfil)) }}"
+           alt="Foto de perfil">
+      {% if current_user.id == usuario.id %}
+      <label for="foto_input" class="fut-edit-icon" title="Cambiar foto">
         <i class="bi bi-camera-fill"></i>
-    </label>
-    <form id="form-foto" action="{{ url_for('subir_foto') }}" method="POST" enctype="multipart/form-data">
+      </label>
+      <form id="form-foto" action="{{ url_for('subir_foto') }}" method="POST" enctype="multipart/form-data">
         <input type="file" name="foto_perfil" id="foto_input" accept="image/*" class="d-none">
-    </form>
-    {% endif %}
-
-    <!-- Descripción -->
-    <div class="fut-description badge bg-secondary mt-2">{{ descripcion }}</div>
-
-    <!-- Estrellas -->
-    <div class="fut-stars text-warning">
+      </form>
+      {% endif %}
+      <div class="fut-description badge bg-secondary mt-2">{{ descripcion }}</div>
+      <div class="fut-stars text-warning">
         {% for i in range(1, 11) %}
-            {% if promedio_redondeado >= i %}
-                <i class="fa-solid fa-star"></i>
-            {% elif promedio_redondeado + 0.5 >= i %}
-                <i class="fa-solid fa-star-half-stroke"></i>
-            {% else %}
-                <i class="fa-regular fa-star"></i>
-            {% endif %}
+          {% if promedio_redondeado >= i %}
+            <i class="fa-solid fa-star"></i>
+          {% elif promedio_redondeado + 0.5 >= i %}
+            <i class="fa-solid fa-star-half-stroke"></i>
+          {% else %}
+            <i class="fa-regular fa-star"></i>
+          {% endif %}
         {% endfor %}
-    </div>
-
-    <!-- Total calificaciones -->
-    <div class="text-muted mt-2">
+      </div>
+      <div class="text-muted mt-2">
         <i class="fa-solid fa-users"></i> {{ total_calificaciones }} calificación{{ total_calificaciones != 1 and 'es' or '' }} recibid{{ total_calificaciones != 1 and 'as' or 'a' }}
-    </div>
-
-    <!-- Barra de progreso -->
-    <div class="progress mx-auto mt-2" style="max-width: 80%; height: 10px;">
+      </div>
+      <div class="progress mx-auto mt-2" style="max-width: 80%; height: 10px;">
         <div class="progress-bar bg-success" role="progressbar"
-             style="width: '{{ (promedio_redondeado * 10) | int }}%';" aria-valuenow="{{ (promedio_redondeado * 10) | int }}"
-             aria-valuemin="0" aria-valuemax="100"></div>
+             style="width: '{{ (promedio_redondeado * 10) | int }}%';"
+             aria-valuenow="{{ (promedio_redondeado * 10) | int }}" aria-valuemin="0" aria-valuemax="100">
+        </div>
+      </div>
+      <div id="mensaje" class="alert alert-success d-none mt-2">Foto actualizada</div>
+      <!-- ⬇️ Inserta este bloque aquí justo antes del cierre -->
+      <div class="flip-click-hint" id="click-hint">
+  <i class="fa-solid fa-rotate fa-bounce"></i>
+</div>
+    </div>
+    
+
+    <!-- 🔁 Cara trasera: información física del jugador -->
+    <div class="flip-card-back fifa-card-shared text-center p-3 d-flex flex-column justify-content-center">
+      <h5 class="mb-3">⚙️ Datos del Jugador</h5>
+      <p><strong>Posición:</strong> {{ usuario.posicion or "No definida" }}</p>
+      <p><strong>Edad:</strong> {{ usuario.edad or "No definida" }}</p>
+      <p><strong>Peso:</strong> {{ usuario.peso or "No definido" }} kg</p>
+      <p><strong>Altura:</strong> {{ usuario.altura or "No definida" }} cm</p>
+      
     </div>
 
-    <!-- Mensaje de éxito -->
-    <div id="mensaje" class="alert alert-success d-none mt-2">Foto actualizada</div>
+  </div>
+  {% if current_user.id == usuario.id %}
+<div class="text-center mt-3">
+  <a href="{{ url_for('editar_info_jugador') }}" class="btn btn-outline-success">
+    ✏️ Completar información del jugador
+  </a>
 </div>
+{% endif %}
+</div>
+
+
+  <!-- Estadísticas -->
+  {% if puede_ver_info %}
+  <div class="mb-4">
+    <h4>📊 Resumen de estadísticas</h4>
+    {% set modo_libre = [] %}
+    {% set modo_vs = [] %}
+    {% set torneo = [] %}
+    {% set ganados_libre = 0 %}
+    {% set ganados_vs = 0 %}
+
+    {% for ins in inscripciones %}
+      {% if ins.partido and ins.partido.resultado %}
+        {% if ins.partido.modo_juego == 'LIBRE' %}
+          {% set _ = modo_libre.append(ins) %}
+          {% if ins.partido.equipo_ganador() == ins.equipo %}
+            {% set ganados_libre = ganados_libre + 1 %}
+          {% endif %}
+        {% elif ins.partido.modo_juego == 'VS' %}
+          {% set _ = modo_vs.append(ins) %}
+          {% if ins.partido.equipo_ganador() == ins.equipo %}
+            {% set ganados_vs = ganados_vs + 1 %}
+          {% endif %}
+        {% elif ins.partido.modo_juego == 'TORNEO' %}
+          {% set _ = torneo.append(ins) %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    <ul class="list-group">
+      <li class="list-group-item">
+        🎯 <strong>Modo Libre:</strong> {{ modo_libre|length }} jugado(s),
+        {{ ganados_libre }} ganado(s),
+        {{ modo_libre|length - ganados_libre }} perdido(s)
+      </li>
+      <li class="list-group-item">
+        🆚 <strong>Modo Versus:</strong> {{ modo_vs|length }} jugado(s),
+        {{ ganados_vs }} ganado(s),
+        {{ modo_vs|length - ganados_vs }} perdido(s)
+      </li>
+      <li class="list-group-item">
+        🏆 <strong>Torneos:</strong> {% if torneo|length > 0 %}Sí ha participado{% else %}No ha participado{% endif %}
+      </li>
+    </ul>
+  </div>
+  {% endif %}
+
     <!-- Only show profile content if user can view it -->
     {% if puede_ver_info %}
     <!-- Solicitudes -->
@@ -302,123 +315,204 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap');
 
+/* ---------- Bandera ---------- */
 .fut-country {
-    position: absolute;
-    top: 50px;
-    right: 15px;
+  position: absolute;
+  top: 50px;
+  right: 15px;
 }
 
 .flag-icon {
-    width: 30px;
-    height: 20px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    box-shadow: 0 0 3px rgba(0,0,0,0.3);
-}
-.fifa-card-fut {
-    width: 300px;
-    aspect-ratio: 5 / 7;
-    height: auto;
-    position: relative;
-    padding: 1rem;
-
-    /* FONDO DEGRADADO ELEGANTE BLANCO-VERDE CLARO */
-    background-image: linear-gradient(135deg, #14532d 0%, #166534 40%, #ffffff 100%);
-    background-size: cover;
-    background-position: center;
-    color: #000;
-    font-family: 'Orbitron', sans-serif;
-
-    /* MÁSCARA DE ESCUDO */
-    mask-image: url('/static/images/escudo_mask.svg');
-    -webkit-mask-image: url('/static/images/escudo_mask.svg');
-    mask-size: contain;
-    -webkit-mask-size: contain;
-    mask-position: center;
-    -webkit-mask-position: center;
-    mask-repeat: no-repeat;
-    -webkit-mask-repeat: no-repeat;
-
-    /* BORDE DORADO */
-    
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 215, 0, 0.3);
-    border-radius: 30px; /* ayuda a suavizar las esquinas si la máscara no recorta todo */
-    overflow: hidden;
+  width: 30px;
+  height: 20px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  box-shadow: 0 0 3px rgba(0,0,0,0.3);
 }
 
+/* ---------- Tarjeta contenedor y efecto flip ---------- */
+.flip-card {
+  background-color: transparent;
+  width: 300px;
+  aspect-ratio: 5 / 7;
+  perspective: 1000px;
+  margin: 0 auto;
+}
 
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+}
+
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 30px;
+  overflow: hidden;
+}
+
+/* 🔵 Cara frontal */
+.flip-card-front {
+  z-index: 2;
+  transform: rotateY(0deg);
+}
+
+/* 🔁 Cara trasera */
+.flip-card-back {
+  transform: rotateY(180deg);
+  z-index: 1;
+}
+
+/* ---------- Estilo compartido ---------- */
+.fifa-card-shared {
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(135deg, #14532d 0%, #166534 40%, #ffffff 100%);
+  background-size: cover;
+  background-position: center;
+  color: #000;
+  font-family: 'Orbitron', sans-serif;
+
+  mask-image: url('/static/images/escudo_mask.svg');
+  -webkit-mask-image: url('/static/images/escudo_mask.svg');
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-position: center;
+  -webkit-mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 215, 0, 0.3);
+  border-radius: 30px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1rem;
+}
+
+/* ---------- Elementos visuales ---------- */
 .fut-rating {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    font-size: 2.5rem;
-    font-weight: 800;
-    text-shadow: 1px 1px 2px black;
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-shadow: 1px 1px 2px black;
 }
 
 .fut-username {
-    position: absolute;
-    top: 20px;
-    right: 15px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    text-shadow: 1px 1px 2px black;
+  position: absolute;
+  top: 20px;
+  right: 15px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px black;
 }
 
 .fut-photo {
-    width: 110px;
-    height: 110px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 4px solid white;
-    margin: 80px auto 10px;
-    display: block;
-    box-shadow: 0 0 15px rgba(255,255,255,0.6);
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid white;
+  margin: 80px auto 10px;
+  display: block;
+  box-shadow: 0 0 15px rgba(255,255,255,0.6);
 }
 
 .fut-edit-icon {
-    position: absolute;
-    top: 170px;
-    left: calc(50% + 40px);
-    background: #fff;
-    padding: 6px;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 0 5px rgba(0,0,0,0.4);
-    color: #000;
+  position: absolute;
+  top: 170px;
+  left: calc(50% + 40px);
+  background: #fff;
+  padding: 6px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0,0,0,0.4);
+  color: #000;
 }
 
 .fut-description {
-    font-size: 0.85rem;
-    margin-top: 0.5rem;
-    font-weight: 600;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  font-weight: 600;
 }
 
 .fut-stars {
-    font-size: 1.1rem;
-    margin: 0.5rem 0;
+  font-size: 1.1rem;
+  margin: 0.5rem 0;
 }
 
 .fut-stats {
-    position: absolute;
-    bottom: 25px;
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    text-align: center;
-    padding: 0 10px;
+  position: absolute;
+  bottom: 25px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0 10px;
 }
 
 .fut-stats div {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    padding: 0.5rem;
-    font-weight: bold;
-    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.5rem;
+  font-weight: bold;
+  box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.3);
+}
+.fut-flip-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  color: white;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 500;
+  pointer-events: none;
+  opacity: 0.85;
+  animation: pulseHint 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseHint {
+  0% { transform: translateX(-50%) scale(1); opacity: 0.8; }
+  50% { transform: translateX(-50%) scale(1.05); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1); opacity: 0.85; }
+}
+#mensaje.alert-success {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background-color: #198754;
+  color: white;
+  z-index: 20;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 </style>
+
+
 
 <!-- JS para foto -->
 <script>
@@ -451,6 +545,17 @@ input.addEventListener('change', () => {
     .catch(err => console.error('Error de red:', err));
 });
 </script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const card = document.querySelector('.flip-card');
+    if (card) {
+      card.addEventListener('click', function () {
+        card.classList.toggle('flipped');
+      });
+    }
+  });
+</script>
+
 <script>
 function renderBotonAgregar() {
   const contenedor = document.getElementById('amistad-container');
@@ -514,4 +619,5 @@ function setupFormCancelar() {
 // Inicializar
 setupFormAmistad();
 </script>
+
 {% endblock %}

@@ -23,6 +23,16 @@ class User(UserMixin, db.Model):
     telefono = db.Column(db.String(20))
     email_confirmado = db.Column(db.Boolean, default=False)
     token_confirmacion = db.Column(db.String(100), nullable=True)
+    posicion = db.Column(db.String(50))
+    posicion_secundaria = db.Column(db.String(50))
+    pie_dominante = db.Column(db.String(20))
+    altura = db.Column(db.Float)
+    peso = db.Column(db.Float)
+    estado_fisico = db.Column(db.String(50))
+    nivel = db.Column(db.String(50))
+    club_actual = db.Column(db.String(100))
+    dorsal = db.Column(db.Integer)
+    edad = db.Column(db.Integer)  # si lo usas
     invitaciones_vs_recibidas = db.relationship('InvitacionVS',foreign_keys='InvitacionVS.invitado_id',backref='invitado_vs',lazy='dynamic'
 )
     calificaciones_recibidas = db.relationship(
